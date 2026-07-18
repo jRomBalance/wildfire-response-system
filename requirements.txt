@@ -45,6 +45,3 @@ python-dateutil==2.9.0
 pytz==2024.1
 rich==13.7.1             # Pretty terminal output
 click==8.1.7             # CLI tools
-
-# FIRMS MAP KEY
-MAP KEY: 8734eea71d3c98859b44c2b3166f84f1

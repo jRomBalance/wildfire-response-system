@@ -22,8 +22,6 @@ logger = logging.getLogger(__name__)
 
 # ── Constants ────────────────────────────────────────────────────────────────
 
-AIRNOW_BASE_URL = "https://www.airnowapi.org/aq"
-
 # AQI Category breakpoints (EPA standard)
 AQI_CATEGORIES = {
     (0,   50):  {"label": "Good",                    "color": "green",  "health": "Air quality is satisfactory."},
@@ -34,26 +32,27 @@ AQI_CATEGORIES = {
     (301, 500): {"label": "Hazardous",               "color": "maroon", "health": "Health warning: emergency conditions. Everyone affected."},
 }
 
-# Monitoring cities in our priority regions
+# Monitoring cities — ZIP codes required for AirNow API
 MONITORING_CITIES = [
     # Ontario-Michigan border zone
-    {"city": "Sault Ste. Marie", "state": "MI", "region": "ontario-michigan-border"},
-    {"city": "Marquette",        "state": "MI", "region": "upper-peninsula-michigan"},
-    {"city": "Traverse City",    "state": "MI", "region": "upper-peninsula-michigan"},
-    {"city": "Detroit",          "state": "MI", "region": "great-lakes-national-forests"},
+    {"city": "Sault Ste. Marie", "state": "MI", "zip": "49783", "region": "ontario-michigan-border"},
+    {"city": "Marquette",        "state": "MI", "zip": "49855", "region": "upper-peninsula-michigan"},
+    {"city": "Traverse City",    "state": "MI", "zip": "49684", "region": "upper-peninsula-michigan"},
+    {"city": "Detroit",          "state": "MI", "zip": "48201", "region": "great-lakes-national-forests"},
     # Minnesota
-    {"city": "Duluth",           "state": "MN", "region": "northern-minnesota-bwca"},
-    {"city": "International Falls","state":"MN","region": "northern-minnesota-bwca"},
+    {"city": "Duluth",           "state": "MN", "zip": "55802", "region": "northern-minnesota-bwca"},
+    {"city": "International Falls","state":"MN","zip": "56649", "region": "northern-minnesota-bwca"},
     # Pacific Northwest
-    {"city": "Seattle",          "state": "WA", "region": "pacific-northwest"},
-    {"city": "Portland",         "state": "OR", "region": "pacific-northwest"},
+    {"city": "Seattle",          "state": "WA", "zip": "98101", "region": "pacific-northwest"},
+    {"city": "Portland",         "state": "OR", "zip": "97201", "region": "pacific-northwest"},
     # Northern Rockies
-    {"city": "Missoula",         "state": "MT", "region": "northern-rockies"},
-    {"city": "Boise",            "state": "ID", "region": "northern-rockies"},
+    {"city": "Missoula",         "state": "MT", "zip": "59801", "region": "northern-rockies"},
+    {"city": "Boise",            "state": "ID", "zip": "83701", "region": "northern-rockies"},
     # Southwest
-    {"city": "Albuquerque",      "state": "NM", "region": "new-mexico-arizona-highlands"},
-    {"city": "Flagstaff",        "state": "AZ", "region": "new-mexico-arizona-highlands"},
+    {"city": "Albuquerque",      "state": "NM", "zip": "87101", "region": "new-mexico-arizona-highlands"},
+    {"city": "Flagstaff",        "state": "AZ", "zip": "86001", "region": "new-mexico-arizona-highlands"},
 ]
+
 
 # ── Data Models ──────────────────────────────────────────────────────────────
 
@@ -64,16 +63,16 @@ class AQIReading:
     state: str
     latitude: float
     longitude: float
-    pollutant: str          # PM2.5, PM10, O3, NO2, etc.
+    pollutant: str
     aqi: int
-    category: str           # Good / Moderate / Unhealthy / etc.
+    category: str
     category_color: str
     health_message: str
     reporting_area: str
     date_observed: str
     hour_observed: int
     region_id: Optional[str] = None
-    is_wildfire_smoke: bool = False   # True if PM2.5 AQI > 100 (likely smoke)
+    is_wildfire_smoke: bool = False
     alert_tier: str = "NONE"
 
     def to_dict(self) -> dict:
@@ -101,11 +100,10 @@ class AQISummary:
 class AirNowClient:
     """
     Async client for EPA AirNow API.
-    Tracks PM2.5 and AQI conditions in cities downwind of wildfire zones.
+    Uses ZIP code endpoint — more reliable than city name lookup.
 
     Usage:
         client = AirNowClient()
-        reading = await client.get_current_aqi(city="Detroit", state="MI")
         summary = await client.get_smoke_event_summary()
     """
 
@@ -117,23 +115,23 @@ class AirNowClient:
                 "Get yours free at: https://docs.airnowapi.org/account/request/\n"
                 "Then set EPA_AIRNOW_API_KEY in your .env file."
             )
-        self._client = httpx.AsyncClient(timeout=20.0)
+        self._client = httpx.AsyncClient(timeout=20.0, follow_redirects=True)
 
     async def get_current_aqi(
         self,
         city: str,
         state: str,
+        zip_code: Optional[str] = None,
         region_id: Optional[str] = None,
     ) -> list[AQIReading]:
         """
-        Get current AQI readings for a city.
+        Get current AQI readings for a city via ZIP code.
         Returns list of readings (one per pollutant: PM2.5, O3, etc.)
         """
-        url = f"{AIRNOW_BASE_URL}/observation/community/current/"
+        url = "https://www.airnowapi.org/aq/observation/zipCode/current/"
         params = {
             "format": "application/json",
-            "city": city,
-            "statecode": state,
+            "zipCode": zip_code or "48201",
             "distance": 25,
             "API_KEY": self.api_key,
         }
@@ -147,13 +145,7 @@ class AirNowClient:
             for item in data:
                 pollutant = item.get("ParameterName", "")
                 aqi_val = int(item.get("AQI", 0))
-                cat_num = int(item.get("Category", {}).get("Number", 1))
-                cat_name = item.get("Category", {}).get("Name", "Good")
-
-                # Get detailed category info
                 cat_info = _get_aqi_category(aqi_val)
-
-                # Detect likely wildfire smoke: PM2.5 AQI > 100
                 is_smoke = (pollutant == "PM2.5" and aqi_val > 100)
 
                 reading = AQIReading(
@@ -175,7 +167,7 @@ class AirNowClient:
                 )
                 readings.append(reading)
 
-            logger.info(f"AirNow [{city}, {state}]: {len(readings)} pollutant readings")
+            logger.info(f"AirNow [{city}, {state} {zip_code}]: {len(readings)} readings")
             return readings
 
         except httpx.HTTPStatusError as e:
@@ -191,11 +183,8 @@ class AirNowClient:
         lon: float,
         distance: int = 25,
     ) -> list[AQIReading]:
-        """
-        Get current AQI readings near a lat/lon coordinate.
-        Useful for querying near fire detection points.
-        """
-        url = f"{AIRNOW_BASE_URL}/observation/latLong/current/"
+        """Get current AQI readings near a lat/lon coordinate."""
+        url = "https://www.airnowapi.org/aq/observation/latLong/current/"
         params = {
             "format": "application/json",
             "latitude": lat,
@@ -243,19 +232,17 @@ class AirNowClient:
     async def get_smoke_event_summary(self) -> AQISummary:
         """
         Query all monitored cities concurrently.
-        Returns a summary of current smoke/AQI conditions.
-        Designed to detect regional wildfire smoke events like the
-        July 2026 Canadian fire event affecting Michigan.
+        Returns summary of current smoke/AQI conditions.
         """
         summary = AQISummary(
             queried_at=datetime.now(timezone.utc).isoformat()
         )
 
-        # Query all cities concurrently
         tasks = [
             self.get_current_aqi(
                 city=c["city"],
                 state=c["state"],
+                zip_code=c.get("zip"),
                 region_id=c.get("region"),
             )
             for c in MONITORING_CITIES
@@ -271,7 +258,6 @@ class AirNowClient:
         pm25_readings = [r for r in all_readings if r.pollutant == "PM2.5"]
         summary.readings = pm25_readings
 
-        # Tally by category
         for r in pm25_readings:
             if r.aqi >= 301:
                 summary.cities_hazardous += 1
@@ -291,7 +277,6 @@ class AirNowClient:
                 if r.region_id not in summary.affected_regions:
                     summary.affected_regions.append(r.region_id)
 
-        # Smoke event = 3+ cities with PM2.5 AQI > 100
         smoke_cities = sum(1 for r in pm25_readings if r.is_wildfire_smoke)
         summary.smoke_event_detected = smoke_cities >= 3
 
@@ -304,7 +289,6 @@ class AirNowClient:
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
 def _get_aqi_category(aqi: int) -> dict:
-    """Return category info dict for a given AQI value."""
     for (low, high), info in AQI_CATEGORIES.items():
         if low <= aqi <= high:
             return info
@@ -315,7 +299,6 @@ def _get_aqi_category(aqi: int) -> dict:
 
 
 def _aqi_to_alert_tier(aqi: int) -> str:
-    """Map AQI value to WildfireNet alert tier."""
     if aqi >= 201:
         return "EMERGENCY"
     elif aqi >= 151:
@@ -330,10 +313,6 @@ def _aqi_to_alert_tier(aqi: int) -> str:
 # ── CLI Entry Point ───────────────────────────────────────────────────────────
 
 async def main():
-    """
-    Quick test — run directly to check current AQI in Michigan.
-    Usage: python src/detection/airnow_client.py
-    """
     from rich.console import Console
     from rich.table import Table
 
@@ -350,13 +329,12 @@ async def main():
 
     summary = await client.get_smoke_event_summary()
 
-    # Print smoke event status
     if summary.smoke_event_detected:
         console.print("[bold red]🚨 SMOKE EVENT DETECTED — Regional wildfire smoke confirmed[/bold red]")
     else:
         console.print("[green]✓ No regional smoke event detected[/green]")
 
-    console.print(f"\nWorst city: [red]{summary.worst_city}[/red] — AQI {summary.worst_aqi}")
+    console.print(f"\nWorst city:              [red]{summary.worst_city}[/red] — AQI {summary.worst_aqi}")
     console.print(f"Cities hazardous:        [red]{summary.cities_hazardous}[/red]")
     console.print(f"Cities very unhealthy:   [red]{summary.cities_very_unhealthy}[/red]")
     console.print(f"Cities unhealthy:        [yellow]{summary.cities_unhealthy}[/yellow]")
@@ -367,10 +345,13 @@ async def main():
         table = Table(title="PM2.5 AQI by City")
         table.add_column("City", style="cyan")
         table.add_column("State")
+        table.add_column("ZIP")
         table.add_column("AQI", style="bold")
         table.add_column("Category")
         table.add_column("Smoke?", style="red")
         table.add_column("Alert Tier", style="bold red")
+
+        city_zip = {c["city"]: c.get("zip", "") for c in MONITORING_CITIES}
 
         for r in sorted(summary.readings, key=lambda x: x.aqi, reverse=True):
             color = {
@@ -382,6 +363,7 @@ async def main():
 
             table.add_row(
                 r.city, r.state,
+                city_zip.get(r.city, ""),
                 f"[{color}]{r.aqi}[/{color}]",
                 f"[{color}]{r.category}[/{color}]",
                 "🔥 YES" if r.is_wildfire_smoke else "No",
