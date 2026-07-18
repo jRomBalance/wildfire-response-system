@@ -1,0 +1,1 @@
+# Drone response layer — autonomous dispatch and Silvaguard integration

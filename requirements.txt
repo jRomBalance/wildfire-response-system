@@ -1,0 +1,50 @@
+# WildfireNet Dependencies
+
+# API Framework
+fastapi==0.111.0
+uvicorn[standard]==0.30.1
+websockets==12.0
+
+# HTTP Clients
+httpx==0.27.0
+requests==2.32.3
+aiohttp==3.9.5
+
+# Data Processing
+pandas==2.2.2
+numpy==1.26.4
+shapely==2.0.4          # Geospatial geometry
+pyproj==3.6.1           # Coordinate transforms
+
+# Database
+sqlalchemy==2.0.30
+aiosqlite==0.20.0
+
+# Alerting
+twilio==9.2.3
+sendgrid==6.11.0
+
+# Environment & Config
+python-dotenv==1.0.1
+pydantic==2.7.1
+pydantic-settings==2.3.0
+
+# Scheduling (polling satellite APIs)
+apscheduler==3.10.4
+
+# Logging
+structlog==24.2.0
+
+# Testing
+pytest==8.2.2
+pytest-asyncio==0.23.7
+httpx==0.27.0            # For FastAPI test client
+
+# Utilities
+python-dateutil==2.9.0
+pytz==2024.1
+rich==13.7.1             # Pretty terminal output
+click==8.1.7             # CLI tools
+
+# FIRMS MAP KEY
+MAP KEY: 8734eea71d3c98859b44c2b3166f84f1

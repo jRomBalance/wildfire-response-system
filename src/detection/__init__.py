@@ -1,0 +1,1 @@
+# Detection layer — satellite, IoT, camera, AI fusion

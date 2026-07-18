@@ -1,0 +1,1 @@
+# Alert pipeline — dispatcher, SMS, email, escalation engine
