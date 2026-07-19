@@ -367,7 +367,7 @@ async def trigger_alert(request: ManualAlertRequest, background_tasks: Backgroun
         severity_score=request.severity,
         frp_mw=None,
         aqi_pm25=None,
-        confidence="high",
+        confidence="nominal",
         description=request.description or f"Manual alert for region {request.region}",
     )
 
