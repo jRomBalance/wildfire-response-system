@@ -65,7 +65,6 @@ class SMSNotifier:
                 body=message,
                 from_=self.from_number,
                 to=to,
-                attempt=1,
             )
 
             logger.info(f"SMS sent to {to} | SID: {msg.sid} | Status: {msg.status}")

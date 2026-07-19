@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>WildfireNet — Autonomous Wildfire Detection &amp; Response | ROM Technology</title>
+<meta content="WildfireNet detects wildfires using NASA satellites and IoT sensors, then alerts firefighters and dispatches drones — before fires get out of control." name="description"/>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --fire: #FF5722;
+      --fire-dark: #B71C1C;
+      --fire-light: #FF8A65;
+      --smoke: #546E7A;
+      --dark: #1a1a1a;
+      --card: #ffffff;
+      --bg: #f8f9fa;
+    }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: var(--bg);
+      color: var(--dark);
+      line-height: 1.6;
+    }
+
+    /* ── NAV ── */
+    nav {
+      background: var(--dark);
+      padding: 16px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+    }
+    .nav-logo { font-size: 24px; }
+    .nav-name {
+      color: white;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+    .nav-sub {
+      color: #aaa;
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .nav-links { display: flex; gap: 24px; }
+    .nav-links a {
+      color: #ccc;
+      text-decoration: none;
+      font-size: 14px;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--fire); }
+    .nav-cta {
+      background: var(--fire) !important;
+      color: white !important;
+      padding: 8px 20px;
+      border-radius: 6px;
+      font-weight: 600 !important;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      background: linear-gradient(135deg, #1a1a1a 0%, #2d1515 50%, #1a1a1a 100%);
+      padding: 100px 40px 80px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: radial-gradient(ellipse at center, rgba(255,87,34,0.15) 0%, transparent 70%);
+    }
+    .hero-badge {
+      display: inline-block;
+      background: rgba(255,87,34,0.2);
+      border: 1px solid var(--fire);
+      color: var(--fire);
+      padding: 6px 18px;
+      border-radius: 20px;
+      font-size: 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 30px;
+      position: relative;
+    }
+    .live-dot {
+      display: inline-block;
+      width: 8px; height: 8px;
+      background: #4CAF50;
+      border-radius: 50%;
+      margin-right: 8px;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.3); }
+    }
+    .hero h1 {
+      font-size: clamp(36px, 6vw, 72px);
+      color: white;
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 24px;
+      position: relative;
+    }
+    .hero h1 span { color: var(--fire); }
+    .hero-sub {
+      font-size: clamp(16px, 2.5vw, 22px);
+      color: #ccc;
+      max-width: 700px;
+      margin: 0 auto 40px;
+      position: relative;
+    }
+    .hero-buttons {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+      position: relative;
+    }
+    .btn-primary {
+      background: var(--fire);
+      color: white;
+      padding: 16px 36px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 16px;
+      transition: background 0.2s, transform 0.2s;
+    }
+    .btn-primary:hover { background: var(--fire-dark); transform: translateY(-2px); }
+    .btn-secondary {
+      background: transparent;
+      color: white;
+      padding: 16px 36px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .btn-secondary:hover { border-color: white; transform: translateY(-2px); }
+
+    /* ── LIVE STATS BAR ── */
+    .stats-bar {
+      background: var(--dark);
+      padding: 20px 40px;
+      display: flex;
+      justify-content: center;
+      gap: 60px;
+      flex-wrap: wrap;
+      border-bottom: 1px solid #333;
+    }
+    .stat {
+      text-align: center;
+    }
+    .stat-number {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--fire);
+    }
+    .stat-label {
+      font-size: 12px;
+      color: #aaa;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* ── SECTIONS ── */
+    section { padding: 80px 40px; }
+    .section-inner { max-width: 1100px; margin: 0 auto; }
+    .section-tag {
+      font-size: 12px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--fire);
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    h2 {
+      font-size: clamp(28px, 4vw, 42px);
+      font-weight: 800;
+      margin-bottom: 16px;
+      line-height: 1.2;
+    }
+    .section-desc {
+      font-size: 18px;
+      color: #555;
+      max-width: 650px;
+      margin-bottom: 50px;
+    }
+
+    /* ── PROBLEM SECTION ── */
+    .problem { background: white; }
+    .timeline {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+    }
+    .timeline-card {
+      padding: 30px;
+      border-radius: 12px;
+      border: 2px solid;
+    }
+    .timeline-card.bad {
+      border-color: #ffcdd2;
+      background: #fff5f5;
+    }
+    .timeline-card.good {
+      border-color: #c8e6c9;
+      background: #f5fff5;
+    }
+    .timeline-card h3 {
+      font-size: 18px;
+      margin-bottom: 20px;
+    }
+    .timeline-card.bad h3 { color: #B71C1C; }
+    .timeline-card.good h3 { color: #2e7d32; }
+    .timeline-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 14px;
+      font-size: 15px;
+    }
+    .step-icon { font-size: 18px; flex-shrink: 0; }
+    .timeline-result {
+      margin-top: 20px;
+      padding: 14px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 15px;
+      text-align: center;
+    }
+    .timeline-card.bad .timeline-result { background: #ffcdd2; color: #B71C1C; }
+    .timeline-card.good .timeline-result { background: #c8e6c9; color: #2e7d32; }
+
+    /* ── HOW IT WORKS ── */
+    .how { background: var(--bg); }
+    .layers {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+    }
+    .layer-card {
+      background: white;
+      border-radius: 12px;
+      padding: 30px 24px;
+      text-align: center;
+      border: 1px solid #e0e0e0;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .layer-card:hover { transform: translateY(-4px); box-shadow: 0 8px 30px rgba(0,0,0,0.1); }
+    .layer-icon { font-size: 40px; margin-bottom: 16px; }
+    .layer-num {
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: var(--fire);
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .layer-card h3 { font-size: 17px; margin-bottom: 10px; }
+    .layer-card p { font-size: 14px; color: #666; }
+
+    /* ── LIVE DATA ── */
+    .live-data { background: var(--dark); color: white; }
+    .live-data h2 { color: white; }
+    .live-data .section-desc { color: #aaa; }
+    .regions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 16px;
+    }
+    .region-card {
+      background: #2a2a2a;
+      border-radius: 10px;
+      padding: 20px;
+      border-left: 4px solid;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .region-card.emergency { border-color: #B71C1C; }
+    .region-card.high { border-color: #FF5722; }
+    .region-card.moderate { border-color: #FF9800; }
+    .region-name { font-size: 15px; font-weight: 600; color: white; }
+    .region-status { font-size: 12px; color: #aaa; margin-top: 4px; }
+    .region-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 12px;
+      white-space: nowrap;
+    }
+    .badge-emergency { background: rgba(183,28,28,0.3); color: #ff6b6b; }
+    .badge-high { background: rgba(255,87,34,0.3); color: #FF8A65; }
+    .badge-moderate { background: rgba(255,152,0,0.3); color: #FFB74D; }
+
+    /* ── OPT-IN ── */
+    .optin { background: white; }
+    .optin-box {
+      background: linear-gradient(135deg, #1a1a1a, #2d1515);
+      border-radius: 16px;
+      padding: 50px 40px;
+      text-align: center;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .optin-box h3 { color: white; font-size: 26px; margin-bottom: 12px; }
+    .optin-box p { color: #ccc; margin-bottom: 30px; font-size: 15px; }
+    .optin-form { display: flex; flex-direction: column; gap: 14px; }
+    .optin-form input {
+      padding: 14px 18px;
+      border-radius: 8px;
+      border: none;
+      font-size: 16px;
+      background: rgba(255,255,255,0.1);
+      color: white;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+    .optin-form input::placeholder { color: #aaa; }
+    .optin-form .consent {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      text-align: left;
+    }
+    .optin-form .consent input { width: auto; flex-shrink: 0; margin-top: 3px; }
+    .optin-form .consent label { color: #ccc; font-size: 13px; line-height: 1.5; }
+    .optin-form .consent label a { color: var(--fire); }
+    .optin-submit {
+      background: var(--fire);
+      color: white;
+      border: none;
+      padding: 16px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .optin-submit:hover { background: var(--fire-dark); }
+    .optin-disclaimer {
+      color: #888;
+      font-size: 12px;
+      margin-top: 16px;
+      line-height: 1.6;
+    }
+    .keyword-box {
+      background: rgba(255,87,34,0.15);
+      border: 1px solid var(--fire);
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 30px;
+    }
+    .keyword-box p { color: #ccc; font-size: 14px; margin-bottom: 8px; }
+    .keyword {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--fire);
+      letter-spacing: 3px;
+    }
+    .keyword-number { color: white; font-size: 15px; margin-top: 6px; }
+
+    /* ── ABOUT ROM ── */
+    .about-rom { background: var(--bg); }
+    .rom-card {
+      background: white;
+      border-radius: 16px;
+      padding: 50px;
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 40px;
+      align-items: center;
+      border: 1px solid #e0e0e0;
+    }
+    .rom-logo-area { text-align: center; }
+    .rom-logo-icon { font-size: 64px; margin-bottom: 16px; }
+    .rom-logo-name {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--dark);
+    }
+    .rom-logo-tag {
+      font-size: 12px;
+      color: #888;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .rom-text h3 { font-size: 24px; margin-bottom: 16px; }
+    .rom-text p { color: #555; font-size: 15px; line-height: 1.8; margin-bottom: 16px; }
+    .rom-link {
+      color: var(--fire);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 15px;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--dark);
+      color: #aaa;
+      padding: 40px;
+      text-align: center;
+    }
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .footer-links a {
+      color: #aaa;
+      text-decoration: none;
+      font-size: 14px;
+      transition: color 0.2s;
+    }
+    .footer-links a:hover { color: var(--fire); }
+    .footer-copy { font-size: 13px; }
+    .footer-copy span { color: var(--fire); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      nav { padding: 16px 20px; }
+      .nav-links { display: none; }
+      .hero { padding: 60px 20px; }
+      .stats-bar { gap: 30px; padding: 20px; }
+      section { padding: 60px 20px; }
+      .timeline { grid-template-columns: 1fr; }
+      .rom-card { grid-template-columns: 1fr; text-align: center; }
+      .optin-box { padding: 30px 20px; }
+    }
+  </style>
+</head>
+<body>
+<!-- NAV -->
+<nav>
+<a class="nav-brand" href="https://romallen.com">
+<span class="nav-logo">🔥</span>
+<div>
+<div class="nav-name">WildfireNet</div>
+<div class="nav-sub">by ROM Technology</div>
+</div>
+</a>
+<div class="nav-links">
+<a href="#how-it-works">How It Works</a>
+<a href="#live-data">Live Data</a>
+<a href="#alerts">Get Alerts</a>
+<a href="https://github.com/jRomBalance/wildfire-response-system">GitHub</a>
+<a class="nav-cta" href="#alerts">🔔 Get Alerts</a>
+</div>
+</nav>
+<!-- HERO -->
+<section class="hero">
+<div class="hero-badge">
+<span class="live-dot"></span>
+    Live System — Active July 2026
+  </div>
+<h1>Catch Wildfires<br/><span>Before They Catch Us</span></h1>
+<p class="hero-sub">
+    WildfireNet fuses NASA satellite data, EPA air quality sensors, and autonomous drones
+    into a single real-time alert platform — getting intelligence to firefighters
+    before fires get out of control.
+  </p>
+<div class="hero-buttons">
+<a class="btn-primary" href="#alerts">🔔 Get Fire Alerts</a>
+<a class="btn-secondary" href="https://github.com/jRomBalance/wildfire-response-system">View the Code →</a>
+</div>
+</section>
+<!-- STATS BAR -->
+<div class="stats-bar">
+<div class="stat">
+<div class="stat-number">3,294</div>
+<div class="stat-label">Active Fire Detections Today</div>
+</div>
+<div class="stat">
+<div class="stat-number">8</div>
+<div class="stat-label">Regions With Active Fire</div>
+</div>
+<div class="stat">
+<div class="stat-number">133</div>
+<div class="stat-label">Peak PM2.5 AQI (Traverse City)</div>
+</div>
+<div class="stat">
+<div class="stat-number">&lt;15 min</div>
+<div class="stat-label">Target Detection-to-Alert Time</div>
+</div>
+<div class="stat">
+<div class="stat-number">11</div>
+<div class="stat-label">Priority Regions Monitored</div>
+</div>
+</div>
+<!-- PROBLEM -->
+<section class="problem" id="problem">
+<div class="section-inner">
+<div class="section-tag">The Problem</div>
+<h2>Fire stations get alerted after someone calls 911.</h2>
+<p class="section-desc">
+      We alert them when NASA's satellite detects heat — before anyone sees flames.
+    </p>
+<div class="timeline">
+<div class="timeline-card bad">
+<h3>❌ Current Reality</h3>
+<div class="timeline-step"><span class="step-icon">🛰️</span><span>NASA satellite detects fire</span></div>
+<div class="timeline-step"><span class="step-icon">💾</span><span>Data sits in database</span></div>
+<div class="timeline-step"><span class="step-icon">👤</span><span>Analyst manually checks (maybe)</span></div>
+<div class="timeline-step"><span class="step-icon">📋</span><span>Report filed through agency chain</span></div>
+<div class="timeline-step"><span class="step-icon">📞</span><span>Someone calls 911</span></div>
+<div class="timeline-step"><span class="step-icon">🚒</span><span>Dispatch notified, crews sent</span></div>
+<div class="timeline-result">⏱️ Total time: 30 min – 4+ hours<br/>Fire size: Catastrophic</div>
+</div>
+<div class="timeline-card good">
+<h3>✅ WildfireNet</h3>
+<div class="timeline-step"><span class="step-icon">🛰️</span><span>NASA satellite detects fire</span></div>
+<div class="timeline-step"><span class="step-icon">⚡</span><span>WildfireNet pulls data automatically</span></div>
+<div class="timeline-step"><span class="step-icon">🧠</span><span>AI scores severity instantly</span></div>
+<div class="timeline-step"><span class="step-icon">📱</span><span>SMS hits firefighter directly</span></div>
+<div class="timeline-step"><span class="step-icon">🚁</span><span>Drone launches autonomously</span></div>
+<div class="timeline-step"><span class="step-icon">💧</span><span>Retardant drops on ignition point</span></div>
+<div class="timeline-result">⚡ Total time: Under 15 minutes<br/>Fire size: Still stoppable</div>
+</div>
+</div>
+</div>
+</section>
+<!-- HOW IT WORKS -->
+<section class="how" id="how-it-works">
+<div class="section-inner">
+<div class="section-tag">How It Works</div>
+<h2>Five layers. One mission.</h2>
+<p class="section-desc">
+      Every layer feeds the next — from space to the ground to your phone in minutes.
+    </p>
+<div class="layers">
+<div class="layer-card">
+<div class="layer-icon">🛰️</div>
+<div class="layer-num">Layer 1</div>
+<h3>Satellite Detection</h3>
+<p>NASA FIRMS VIIRS sensors detect heat signatures at 375m resolution, updated every 10 minutes.</p>
+</div>
+<div class="layer-card">
+<div class="layer-icon">🌲</div>
+<div class="layer-num">Layer 2</div>
+<h3>IoT Ground Sensors</h3>
+<p>Solar-powered sensors detect CO, VOC, and PM2.5 at the smoldering phase — within 3 minutes of ignition.</p>
+</div>
+<div class="layer-card">
+<div class="layer-icon">🧠</div>
+<div class="layer-num">Layer 3</div>
+<h3>AI Fusion Engine</h3>
+<p>Cross-validates satellite, sensor, and camera data. Eliminates false positives. Assigns severity score.</p>
+</div>
+<div class="layer-card">
+<div class="layer-icon">📡</div>
+<div class="layer-num">Layer 4</div>
+<h3>Instant Alerts</h3>
+<p>SMS and email alerts go directly to firefighter units with GPS coordinates, spread prediction, and severity.</p>
+</div>
+<div class="layer-card">
+<div class="layer-icon">🚁</div>
+<div class="layer-num">Layer 5</div>
+<h3>Drone Response</h3>
+<p>Autonomous drones launch from solar hangars, confirm fire via infrared, and drop retardant — no human needed.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- LIVE DATA -->
+<section class="live-data" id="live-data">
+<div class="section-inner">
+<div class="section-tag">Live Data — July 18, 2026</div>
+<h2>What We're Watching Right Now</h2>
+<p class="section-desc">
+      Real satellite data pulled from NASA FIRMS. Updated every 10 minutes.
+    </p>
+<div class="regions-grid">
+<div class="region-card emergency">
+<div>
+<div class="region-name">Alberta / BC Interior</div>
+<div class="region-status">728 detections · Max FRP: 144.2 MW</div>
+</div>
+<span class="region-badge badge-emergency">⚠️ WARNING</span>
+</div>
+<div class="region-card high">
+<div>
+<div class="region-name">Pacific Northwest (WA/OR)</div>
+<div class="region-status">2,108 detections · Max FRP: 46.1 MW</div>
+</div>
+<span class="region-badge badge-high">🟠 ADVISORY</span>
+</div>
+<div class="region-card high">
+<div>
+<div class="region-name">Saskatchewan Boreal</div>
+<div class="region-status">410 detections · Max FRP: 21.6 MW</div>
+</div>
+<span class="region-badge badge-high">🟠 ADVISORY</span>
+</div>
+<div class="region-card high">
+<div>
+<div class="region-name">Northern Ontario Boreal</div>
+<div class="region-status">28 detections · Max FRP: 8.9 MW</div>
+</div>
+<span class="region-badge badge-high">🟠 ADVISORY</span>
+</div>
+<div class="region-card moderate">
+<div>
+<div class="region-name">Ontario–Michigan Border</div>
+<div class="region-status">3 detections · Traverse City AQI: 133</div>
+</div>
+<span class="region-badge badge-moderate">👀 WATCH</span>
+</div>
+<div class="region-card moderate">
+<div>
+<div class="region-name">Great Lakes National Forests</div>
+<div class="region-status">4 detections · Detroit AQI: 64</div>
+</div>
+<span class="region-badge badge-moderate">👀 WATCH</span>
+</div>
+</div>
+<p style="color:#666; font-size:13px; margin-top:24px; text-align:center;">
+      Data source: NASA FIRMS VIIRS · EPA AirNow · Updated July 18, 2026
+    </p>
+</div>
+</section>
+<!-- OPT-IN / ALERTS -->
+<section class="optin" id="alerts">
+<div class="section-inner">
+<div class="section-tag">Get Alerts</div>
+<h2>Receive wildfire alerts for your region.</h2>
+<p class="section-desc">
+      Sign up to receive SMS and email alerts when fires are detected near you.
+      Free. No spam. Unsubscribe anytime.
+    </p>
+<div class="optin-box">
+<h3>🔔 WildfireNet Alerts</h3>
+<p>Get notified when NASA detects fire activity or PM2.5 reaches dangerous levels in your region.</p>
+<!-- Text opt-in option -->
+<div class="keyword-box">
+<p>Text to opt-in instantly:</p>
+<div class="keyword">WILDFIRE</div>
+<div class="keyword-number">to your regional WildfireNet number</div>
+</div>
+<!-- Web form opt-in -->
+<form class="optin-form" onsubmit="handleOptIn(event)">
+<input id="optin-name" placeholder="Your name" required="" type="text"/>
+<input id="optin-phone" placeholder="Phone number (e.g. +1 555 123 4567)" type="tel"/>
+<input id="optin-email" placeholder="Email address" required="" type="email"/>
+<input id="optin-region" placeholder="Your city or ZIP code" type="text"/>
+<div class="consent">
+<input id="consent-sms" name="consent-sms" type="checkbox"/>
+<label for="consent-sms">
+            I agree to receive wildfire alert SMS messages from WildfireNet (ROM Technology).
+            Message frequency varies based on fire activity. Message &amp; data rates may apply.
+            Reply STOP to unsubscribe, HELP for help.
+            <a href="privacy.html">Privacy Policy</a> · <a href="terms.html">Terms &amp; Conditions</a>
+</label>
+</div>
+<div class="consent">
+<input id="consent-email" name="consent-email" type="checkbox"/>
+<label for="consent-email">
+            I agree to receive wildfire alert emails from WildfireNet (ROM Technology).
+            <a href="privacy.html">Privacy Policy</a>
+</label>
+</div>
+<button class="optin-submit" type="submit">🔔 Sign Me Up for Alerts</button>
+</form>
+<p class="optin-disclaimer">
+        By signing up, you consent to receive wildfire alert messages from WildfireNet / ROM Technology.
+        Message frequency varies — alerts are sent only when fire or air quality events are detected
+        in your region. Message &amp; data rates may apply. Text STOP to cancel. Text HELP for help.
+        Mobile numbers are never shared with third parties.
+        <a href="privacy.html" style="color:var(--fire);">Privacy Policy</a> ·
+        <a href="terms.html" style="color:var(--fire);">Terms &amp; Conditions</a>
+</p>
+</div>
+</div>
+</section>
+<!-- ABOUT ROM -->
+<section class="about-rom">
+<div class="section-inner">
+<div class="rom-card">
+<div class="rom-logo-area">
+<div class="rom-logo-icon">⚙️</div>
+<div class="rom-logo-name">ROM Technology</div>
+<div class="rom-logo-tag">Built · To · Last</div>
+</div>
+<div class="rom-text">
+<h3>Built by ROM Technology</h3>
+<p>
+          WildfireNet is a project of ROM Technology — an independent technology firm
+          committed to building systems that matter. We started this project on July 17, 2026,
+          because Canadian wildfires were choking Michigan with hazardous PM2.5 particles
+          and someone had to do something.
+        </p>
+<p>
+          The technology to detect and respond to wildfires faster already existed.
+          NASA had the satellite data. Dryad had the IoT sensors. The gap was integration.
+          We built the integration.
+        </p>
+<a class="rom-link" href="https://romallen.com">Visit romallen.com →</a>
+</div>
+</div>
+</div>
+</section>
+<!-- FOOTER -->
+<footer>
+<div class="footer-links">
+<a href="index.html">Home</a>
+<a href="privacy.html">Privacy Policy</a>
+<a href="terms.html">Terms &amp; Conditions</a>
+<a href="https://github.com/jRomBalance/wildfire-response-system">GitHub</a>
+<a href="https://romallen.com">ROM Technology</a>
+<a href="mailto:alerts@romallen.com">Contact</a>
+</div>
+<p class="footer-copy">
+    © 2026 <span>ROM Technology</span> · WildfireNet ·
+    Built July 17, 2026 because the smoke was real and someone had to act.<br/>
+    SMS alerts powered by Twilio · Email alerts powered by SendGrid ·
+    Fire data from NASA FIRMS · Air quality from EPA AirNow
+  </p>
+</footer>
+<script>
+  function handleOptIn(e) {
+    e.preventDefault();
+    const name = document.getElementById('optin-name').value;
+    const phone = document.getElementById('optin-phone').value;
+    const email = document.getElementById('optin-email').value;
+    const smsConsent = document.getElementById('consent-sms').checked;
+    const emailConsent = document.getElementById('consent-email').checked;
+
+    if (!emailConsent && !smsConsent) {
+      alert('Please check at least one consent box to receive alerts.');
+      return;
+    }
+
+    // TODO: POST to /api/v1/subscribers endpoint (Phase 2)
+    alert(`✅ Thank you, ${name}! You're signed up for WildfireNet alerts.\n\n` +
+          `You'll receive notifications when fire or smoke events are detected in your region.\n\n` +
+          `Reply STOP to any SMS to unsubscribe at any time.`);
+
+    e.target.reset();
+  }
+</script>
+</body>
+</html>

@@ -428,6 +428,78 @@ async def dispatch_drone(lat: float, lon: float, alert_id: Optional[str] = None)
     return result.to_dict()
 
 
+# ── Subscriber Endpoints ─────────────────────────────────────────────────────
+
+class SubscriberRequest(BaseModel):
+    name: str
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    region_id: Optional[str] = None
+    zip_code: Optional[str] = None
+    sms_consent: bool = False
+    email_consent: bool = False
+    opt_in_method: str = "web_form"
+
+    model_config = {"json_schema_extra": {
+        "example": {
+            "name": "Jerry Allen",
+            "phone": "+15551234567",
+            "email": "jerry@example.com",
+            "region_id": "ontario-michigan-border",
+            "zip_code": "49783",
+            "sms_consent": True,
+            "email_consent": True,
+        }
+    }}
+
+
+@app.post("/api/v1/subscribers", tags=["Subscribers"])
+async def add_subscriber(request: SubscriberRequest):
+    """
+    Add a new subscriber to receive wildfire alerts.
+    Called by the web opt-in form at romallen.com/wildfire
+    """
+    from src.models.fire_event_db import add_subscriber as db_add
+    result = db_add(
+        name=request.name,
+        phone=request.phone,
+        email=request.email,
+        region_id=request.region_id,
+        zip_code=request.zip_code,
+        sms_consent=request.sms_consent,
+        email_consent=request.email_consent,
+        opt_in_method=request.opt_in_method,
+    )
+    if not result["success"]:
+        raise HTTPException(status_code=400, detail=result["message"])
+    return result
+
+
+@app.delete("/api/v1/subscribers/{phone}", tags=["Subscribers"])
+async def opt_out_subscriber(phone: str):
+    """Process STOP/opt-out request for a phone number."""
+    from src.models.fire_event_db import opt_out_subscriber as db_opt_out
+    success = db_opt_out(phone)
+    if not success:
+        raise HTTPException(status_code=404, detail="Subscriber not found")
+    return {"success": True, "message": "Unsubscribed successfully"}
+
+
+@app.get("/api/v1/subscribers", tags=["Subscribers"])
+async def get_subscribers():
+    """Get all active subscribers (admin use)."""
+    from src.models.fire_event_db import get_all_active_subscribers
+    subs = get_all_active_subscribers()
+    return {"total": len(subs), "subscribers": subs}
+
+
+@app.get("/api/v1/analytics/fires", tags=["Analytics"])
+async def get_fire_analytics(days: int = 7):
+    """Get fire detection analytics for the last N days."""
+    from src.models.fire_event_db import get_fire_summary
+    return get_fire_summary(days=days)
+
+
 # ── Region Endpoints ──────────────────────────────────────────────────────────
 
 @app.get("/api/v1/regions", tags=["Regions"])
@@ -523,22 +595,40 @@ async def _background_fire_poll():
     Background task: polls NASA FIRMS every 10 minutes.
     On new high-severity detections, auto-triggers alert pipeline
     and broadcasts to WebSocket clients.
+    Uses SQLite to suppress duplicate alerts.
     """
     POLL_INTERVAL_SECONDS = 600  # 10 minutes
+    FIRST_POLL_DELAY = 30        # 30 seconds on startup for testing
 
-    logger.info("Background fire polling started (every 10 min)")
+    logger.info("Background fire polling started (first poll in 30s, then every 10 min)")
+
+    # Initialize database on startup
+    try:
+        from src.models.fire_event_db import init_db
+        init_db()
+        logger.info("SQLite database initialized")
+    except Exception as e:
+        logger.error(f"Database init failed: {e}")
+
+    # Short delay on first poll so server fully starts
+    await asyncio.sleep(FIRST_POLL_DELAY)
 
     while True:
         try:
-            await asyncio.sleep(POLL_INTERVAL_SECONDS)
-
             nasa_key = os.getenv("NASA_FIRMS_API_KEY")
             if not nasa_key:
                 logger.debug("FIRMS key not set — skipping background poll")
+                await asyncio.sleep(POLL_INTERVAL_SECONDS)
                 continue
+
+            logger.info("🛰️  Background fire poll starting...")
 
             from src.detection.firms_client import FIRMSClient
             from src.alerts.alert_dispatcher import AlertDispatcher, build_alert_from_firms
+            from src.models.fire_event_db import (
+                was_recently_alerted, save_fire_event,
+                save_alert_sent, get_subscribers_for_region
+            )
 
             client = FIRMSClient()
             results = await client.query_all_priority_regions(
@@ -546,29 +636,70 @@ async def _background_fire_poll():
             )
             await client.close()
 
-            # Auto-alert on WARNING or EMERGENCY severity
             dispatcher = AlertDispatcher()
+            new_alerts = 0
+
             for result in results:
                 for detection in result.detections:
-                    if detection.severity_score >= 3:  # WARNING threshold
-                        alert = build_alert_from_firms(detection)
-                        dispatch_result = await dispatcher.dispatch(alert)
+                    # Only alert on WARNING (3+) or higher
+                    if detection.severity_score < 3:
+                        continue
 
-                        # Broadcast to WebSocket clients
-                        await manager.broadcast({
-                            "event": "fire_alert",
-                            "alert_id": alert.alert_id,
-                            "tier": alert.tier,
-                            "lat": alert.latitude,
-                            "lon": alert.longitude,
-                            "region_id": alert.region_id,
-                            "severity": alert.severity_score,
-                            "frp_mw": alert.frp_mw,
-                            "source": "background_poll",
-                            "timestamp": alert.created_at,
-                        })
+                    # Save detection to DB
+                    event_id = save_fire_event(detection)
 
-            logger.info("Background fire poll complete")
+                    # Skip if already alerted for this region recently
+                    if was_recently_alerted(
+                        detection.region_id or "unknown",
+                        detection.severity_score,
+                        hours=2,
+                    ):
+                        logger.debug(
+                            f"Duplicate suppressed: {detection.region_id} "
+                            f"severity {detection.severity_score}"
+                        )
+                        continue
+
+                    # Build and dispatch alert
+                    alert = build_alert_from_firms(detection)
+
+                    # Load region subscribers dynamically
+                    if detection.region_id:
+                        subs = get_subscribers_for_region(detection.region_id)
+                        phones = [s["phone"] for s in subs if s["phone"] and s["sms_consent"]]
+                        emails = [s["email"] for s in subs if s["email"] and s["email_consent"]]
+                        if phones:
+                            os.environ["FIREFIGHTER_PHONES"] = ",".join(phones)
+                        if emails:
+                            os.environ["FIREFIGHTER_EMAILS"] = ",".join(emails)
+
+                    dispatch_result = await dispatcher.dispatch(alert)
+
+                    # Record alert in DB
+                    save_alert_sent(alert, event_id)
+                    new_alerts += 1
+
+                    # Broadcast to WebSocket clients
+                    await manager.broadcast({
+                        "event": "fire_alert",
+                        "alert_id": alert.alert_id,
+                        "tier": alert.tier,
+                        "lat": alert.latitude,
+                        "lon": alert.longitude,
+                        "region_id": alert.region_id,
+                        "severity": alert.severity_score,
+                        "frp_mw": alert.frp_mw,
+                        "source": "background_poll",
+                        "timestamp": alert.created_at,
+                    })
+
+            logger.info(
+                f"✅ Background poll complete — "
+                f"{new_alerts} new alerts dispatched"
+            )
+
+            # Wait before next poll
+            await asyncio.sleep(POLL_INTERVAL_SECONDS)
 
         except asyncio.CancelledError:
             logger.info("Background poll cancelled")
