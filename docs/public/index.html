@@ -665,7 +665,7 @@
 <input id="optin-email" placeholder="Email address" required="" type="email"/>
 <input id="optin-region" placeholder="Your city or ZIP code" type="text"/>
 <div class="consent">
-<input id="consent-sms" name="consent-sms" type="checkbox" required/> <label for="consent-sms"> I agree to receive <strong>recurring automated wildfire alert SMS messages</strong> from WildfireNet (ROM Technology) at the number provided. Message frequency varies based on fire activity in my region. Message &amp; data rates may apply. Reply <strong>STOP</strong> to cancel at any time. Reply <strong>HELP</strong> for help. This consent is not a condition of any purchase. <a href="privacy.html" target="_blank">Privacy Policy</a> · <a href="terms.html" target="_blank">Terms &amp; Conditions</a> </label> </div> <div class="consent"> <input id="consent-email" name="consent-email" type="checkbox"/> <label for="consent-email"> I agree to receive wildfire alert emails from WildfireNet (ROM Technology). I can unsubscribe at any time. <a href="privacy.html" target="_blank">Privacy Policy</a>
+<input id="consent-sms" name="consent-sms" required="" type="checkbox"/> <label for="consent-sms"> I agree to receive <strong>recurring automated wildfire alert SMS messages</strong> from WildfireNet (ROM Technology) at the number provided. Message frequency varies based on fire activity in my region. Message &amp; data rates may apply. Reply <strong>STOP</strong> to cancel at any time. Reply <strong>HELP</strong> for help. This consent is not a condition of any purchase. <a href="privacy.html" target="_blank">Privacy Policy</a> · <a href="terms.html" target="_blank">Terms &amp; Conditions</a> </label> </div> <div class="consent"> <input id="consent-email" name="consent-email" type="checkbox"/> <label for="consent-email"> I agree to receive wildfire alert emails from WildfireNet (ROM Technology). I can unsubscribe at any time. <a href="privacy.html" target="_blank">Privacy Policy</a>
 </label>
 </div>
 <button class="optin-submit" type="submit">🔔 Sign Me Up for Alerts</button>
@@ -726,12 +726,16 @@
   </p>
 </footer>
 <script>
-  function handleOptIn(e) {
+  const RAILWAY_API = 'https://wild-fire-response-production.up.railway.app';
+
+  async function handleOptIn(e) {
     e.preventDefault();
-    const name = document.getElementById('optin-name').value;
-    const phone = document.getElementById('optin-phone').value;
-    const email = document.getElementById('optin-email').value;
-    const smsConsent = document.getElementById('consent-sms').checked;
+
+    const name         = document.getElementById('optin-name').value.trim();
+    const phone        = document.getElementById('optin-phone').value.trim();
+    const email        = document.getElementById('optin-email').value.trim();
+    const region       = document.getElementById('optin-region').value.trim();
+    const smsConsent   = document.getElementById('consent-sms').checked;
     const emailConsent = document.getElementById('consent-email').checked;
 
     if (!emailConsent && !smsConsent) {
@@ -739,12 +743,44 @@
       return;
     }
 
-    // TODO: POST to /api/v1/subscribers endpoint (Phase 2)
-    alert(`✅ Thank you, ${name}! You're signed up for WildfireNet alerts.\n\n` +
-          `You'll receive notifications when fire or smoke events are detected in your region.\n\n` +
-          `Reply STOP to any SMS to unsubscribe at any time.`);
+    const btn = e.target.querySelector('.optin-submit');
+    btn.textContent = '⏳ Signing you up...';
+    btn.disabled = true;
 
-    e.target.reset();
+    try {
+      const response = await fetch(`${RAILWAY_API}/api/v1/subscribers`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name:          name,
+          phone:         phone || null,
+          email:         email || null,
+          region_id:     null,
+          zip_code:      region || null,
+          sms_consent:   smsConsent,
+          email_consent: emailConsent,
+          opt_in_method: 'web_form',
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        btn.textContent = '✅ Signed Up!';
+        btn.style.background = '#2e7d32';
+        alert(`✅ ${data.message || 'Welcome to WildfireNet!'}\n\nYou will receive alerts when fire or smoke events are detected in your region.\n\nReply STOP to any SMS to unsubscribe at any time.`);
+        e.target.reset();
+      } else {
+        const err = await response.json();
+        throw new Error(err.detail || 'Signup failed');
+      }
+
+    } catch (error) {
+      console.error('Signup error:', error);
+      btn.textContent = '🔔 Sign Me Up for Alerts';
+      btn.disabled = false;
+      btn.style.background = '';
+      alert(`❌ Signup failed: ${error.message}\n\nPlease try again or email alerts@romallen.com`);
+    }
   }
 </script>
 </body>
