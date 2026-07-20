@@ -730,18 +730,49 @@ async def _background_fire_poll():
                         )
                         continue
 
-                    # Build and dispatch alert
+                    # Build alert
                     alert = build_alert_from_firms(detection)
 
-                    # Load region subscribers dynamically from DB
-                    if detection.region_id:
-                        subs = get_subscribers_for_region(detection.region_id)
-                        phones = [s["phone"] for s in subs if s["phone"] and s["sms_consent"]]
-                        emails = [s["email"] for s in subs if s["email"] and s["email_consent"]]
-                        if phones:
-                            os.environ["FIREFIGHTER_PHONES"] = ",".join(phones)
-                        if emails:
-                            os.environ["FIREFIGHTER_EMAILS"] = ",".join(emails)
+                    # Load region subscribers directly from DB
+                    subs = get_subscribers_for_region(detection.region_id) if detection.region_id else []
+                    phones = [s["phone"] for s in subs if s["phone"] and s["sms_consent"]]
+                    emails = [s["email"] for s in subs if s["email"] and s["email_consent"]]
+
+                    logger.info(
+                        f"Alert {alert.tier} for {detection.region_id}: "
+                        f"{len(subs)} subscribers, {len(phones)} phones, {len(emails)} emails"
+                    )
+
+                    if not subs:
+                        logger.info(f"No subscribers for {detection.region_id} - skipping alert")
+                        continue
+
+                    # Create fresh dispatcher with DB contacts
+                    from src.alerts.sms_notifier import SMSNotifier
+                    from src.alerts.email_notifier import EmailNotifier
+
+                    # Send emails directly to subscribers
+                    if emails:
+                        try:
+                            notifier = EmailNotifier()
+                            subject, body = _build_email_for_alert(alert)
+                            for email_addr in emails:
+                                await notifier.send(to=email_addr, subject=subject, body=body)
+                                logger.info(f"Alert email sent to {email_addr}")
+                        except Exception as e:
+                            logger.error(f"Email send failed: {e}")
+
+                    # Send SMS directly to subscribers
+                    if phones:
+                        try:
+                            sms = SMSNotifier()
+                            from src.alerts.alert_dispatcher import _build_sms_message
+                            message = _build_sms_message(alert)
+                            for phone in phones:
+                                await sms.send(to=phone, message=message)
+                                logger.info(f"Alert SMS sent to {phone}")
+                        except Exception as e:
+                            logger.error(f"SMS send failed: {e}")
 
                     dispatch_result = await dispatcher.dispatch(alert)
 
@@ -779,7 +810,7 @@ async def _background_fire_poll():
             await asyncio.sleep(60)  # Back off on error
 
 
-# ── Entry Point ───────────────────────────────────────────────────────────────
+
 
 if __name__ == "__main__":
     import uvicorn
