@@ -439,6 +439,21 @@
     .footer-copy span { color: var(--fire); }
 
     /* ── RESPONSIVE ── */
+    .region-check {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #ccc;
+      font-size: 13px;
+      cursor: pointer;
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.1);
+      transition: background 0.2s;
+    }
+    .region-check:hover { background: rgba(255,87,34,0.15); border-color: var(--fire); }
+    .region-check input { accent-color: var(--fire); width: 16px; height: 16px; flex-shrink: 0; }
+
     @media (max-width: 768px) {
       nav { padding: 16px 20px; }
       .nav-links { display: none; }
@@ -586,60 +601,21 @@
 <!-- LIVE DATA -->
 <section class="live-data" id="live-data">
 <div class="section-inner">
-<div class="section-tag">Live Data — July 18, 2026</div>
-<h2>What We're Watching Right Now</h2>
-<p class="section-desc">
-      Real satellite data pulled from NASA FIRMS. Updated every 10 minutes.
-    </p>
-<div class="regions-grid">
-<div class="region-card emergency">
-<div>
-<div class="region-name">Alberta / BC Interior</div>
-<div class="region-status">728 detections · Max FRP: 144.2 MW</div>
+<div class="section-tag" id="live-data-tag">Live Data &#8212; Loading...</div>
+<h2>What We&#39;re Watching Right Now</h2>
+<p class="section-desc">Real satellite data pulled from NASA FIRMS. Auto-updates every 10 minutes.</p>
+<div class="regions-grid" id="regions-grid">
+  <div class="region-card moderate" style="grid-column:1/-1;text-align:center;padding:40px;">
+    <div class="region-name">&#9203; Loading live fire data...</div>
+    <div class="region-status">Connecting to NASA FIRMS satellite feed</div>
+  </div>
 </div>
-<span class="region-badge badge-emergency">⚠️ WARNING</span>
-</div>
-<div class="region-card high">
-<div>
-<div class="region-name">Pacific Northwest (WA/OR)</div>
-<div class="region-status">2,108 detections · Max FRP: 46.1 MW</div>
-</div>
-<span class="region-badge badge-high">🟠 ADVISORY</span>
-</div>
-<div class="region-card high">
-<div>
-<div class="region-name">Saskatchewan Boreal</div>
-<div class="region-status">410 detections · Max FRP: 21.6 MW</div>
-</div>
-<span class="region-badge badge-high">🟠 ADVISORY</span>
-</div>
-<div class="region-card high">
-<div>
-<div class="region-name">Northern Ontario Boreal</div>
-<div class="region-status">28 detections · Max FRP: 8.9 MW</div>
-</div>
-<span class="region-badge badge-high">🟠 ADVISORY</span>
-</div>
-<div class="region-card moderate">
-<div>
-<div class="region-name">Ontario–Michigan Border</div>
-<div class="region-status">3 detections · Traverse City AQI: 133</div>
-</div>
-<span class="region-badge badge-moderate">👀 WATCH</span>
-</div>
-<div class="region-card moderate">
-<div>
-<div class="region-name">Great Lakes National Forests</div>
-<div class="region-status">4 detections · Detroit AQI: 64</div>
-</div>
-<span class="region-badge badge-moderate">👀 WATCH</span>
-</div>
-</div>
-<p style="color:#666; font-size:13px; margin-top:24px; text-align:center;">
-      Data source: NASA FIRMS VIIRS · EPA AirNow · Updated July 18, 2026
-    </p>
+<p style="color:#666;font-size:13px;margin-top:24px;text-align:center;" id="live-data-footer">
+  Data source: NASA FIRMS VIIRS &middot; EPA AirNow &middot; Connecting...
+</p>
 </div>
 </section>
+
 <!-- OPT-IN / ALERTS -->
 <section class="optin" id="alerts">
 <div class="section-inner">
@@ -663,7 +639,24 @@
 <input id="optin-name" placeholder="Your name" required="" type="text"/>
 <input id="optin-phone" placeholder="Phone number (e.g. +1 555 123 4567)" type="tel"/>
 <input id="optin-email" placeholder="Email address" required="" type="email"/>
-<input id="optin-region" placeholder="Your city or ZIP code" type="text"/>
+<div style="text-align:left;margin-bottom:8px;">
+  <label style="color:#ccc;font-size:14px;font-weight:600;display:block;margin-bottom:10px;">
+    &#128205; Watch Zones &#8212; Select all regions you want alerts for:
+  </label>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+    <label class="region-check"><input type="checkbox" name="regions" value="ontario-michigan-border"> Ontario&#8211;Michigan Border</label>
+    <label class="region-check"><input type="checkbox" name="regions" value="northern-ontario-boreal"> Northern Ontario Boreal</label>
+    <label class="region-check"><input type="checkbox" name="regions" value="upper-peninsula-michigan"> Upper Peninsula, Michigan</label>
+    <label class="region-check"><input type="checkbox" name="regions" value="alberta-bc-interior"> Alberta / BC Interior</label>
+    <label class="region-check"><input type="checkbox" name="regions" value="saskatchewan-boreal"> Saskatchewan Boreal</label>
+    <label class="region-check"><input type="checkbox" name="regions" value="northern-minnesota-bwca"> Northern Minnesota / BWCA</label>
+    <label class="region-check"><input type="checkbox" name="regions" value="pacific-northwest"> Pacific Northwest (WA/OR)</label>
+    <label class="region-check"><input type="checkbox" name="regions" value="northern-rockies"> Northern Rockies (MT/ID)</label>
+    <label class="region-check"><input type="checkbox" name="regions" value="quebec-boreal"> Quebec Boreal Forest</label>
+    <label class="region-check"><input type="checkbox" name="regions" value="great-lakes-national-forests"> Great Lakes Forests</label>
+    <label class="region-check" style="grid-column:1/-1;"><input type="checkbox" name="regions" value="all" id="all-regions"> <strong>&#128293; All Regions (recommended)</strong></label>
+  </div>
+</div>
 <div class="consent">
 <input id="consent-sms" name="consent-sms" required="" type="checkbox"/> <label for="consent-sms"> I agree to receive <strong>recurring automated wildfire alert SMS messages</strong> from WildfireNet (ROM Technology) at the number provided. Message frequency varies based on fire activity in my region. Message &amp; data rates may apply. Reply <strong>STOP</strong> to cancel at any time. Reply <strong>HELP</strong> for help. This consent is not a condition of any purchase. <a href="privacy.html" target="_blank">Privacy Policy</a> · <a href="terms.html" target="_blank">Terms &amp; Conditions</a> </label> </div> <div class="consent"> <input id="consent-email" name="consent-email" type="checkbox"/> <label for="consent-email"> I agree to receive wildfire alert emails from WildfireNet (ROM Technology). I can unsubscribe at any time. <a href="privacy.html" target="_blank">Privacy Policy</a>
 </label>
@@ -681,6 +674,27 @@
 </div>
 </div>
 </section>
+<!-- OPT-OUT -->
+<section style="background:#111;padding:50px 40px;" id="unsubscribe">
+<div style="max-width:600px;margin:0 auto;text-align:center;">
+  <h3 style="color:#aaa;font-size:20px;margin-bottom:8px;">Manage Your Alert Subscription</h3>
+  <p style="color:#666;font-size:14px;margin-bottom:24px;">Enter your email or phone number to unsubscribe from WildfireNet alerts.</p>
+  <form id="optout-form" style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;">
+    <input id="optout-contact" type="text" placeholder="Email or phone number"
+      style="flex:1;min-width:220px;padding:14px 18px;border-radius:8px;
+             border:1px solid #444;background:#2a2a2a;color:white;font-size:15px;"/>
+    <button type="submit" id="optout-btn"
+      style="background:#555;color:white;border:none;padding:14px 28px;
+             border-radius:8px;font-size:15px;cursor:pointer;font-weight:600;">
+      Unsubscribe
+    </button>
+  </form>
+  <p style="color:#555;font-size:12px;margin-top:16px;">
+    You can also reply STOP to any SMS alert to unsubscribe instantly.
+  </p>
+</div>
+</section>
+
 <!-- ABOUT ROM -->
 <section class="about-rom">
 <div class="section-inner">
@@ -726,61 +740,193 @@
   </p>
 </footer>
 <script>
-  const RAILWAY_API = 'https://wild-fire-response-production.up.railway.app';
+  var RAILWAY_API = 'https://wild-fire-response-production.up.railway.app';
 
-  async function handleOptIn(e) {
+  var REGION_NAMES = {
+    'ontario-michigan-border':     'Ontario-Michigan Border',
+    'northern-ontario-boreal':     'Northern Ontario Boreal',
+    'upper-peninsula-michigan':    'Upper Peninsula, Michigan',
+    'alberta-bc-interior':         'Alberta / BC Interior',
+    'saskatchewan-boreal':         'Saskatchewan Boreal',
+    'northern-minnesota-bwca':     'Northern Minnesota / BWCA',
+    'pacific-northwest':           'Pacific Northwest (WA/OR)',
+    'northern-rockies':            'Northern Rockies (MT/ID)',
+    'new-mexico-arizona-highlands':'NM / AZ Highlands',
+    'quebec-boreal':               'Quebec Boreal Forest',
+    'great-lakes-national-forests':'Great Lakes Forests'
+  };
+
+  function loadLiveData() {
+    var grid   = document.getElementById('regions-grid');
+    var tag    = document.getElementById('live-data-tag');
+    var footer = document.getElementById('live-data-footer');
+    if (!grid || !tag || !footer) return;
+
+    fetch(RAILWAY_API + '/api/v1/fires/active')
+      .then(function(res) {
+        if (!res.ok) throw new Error('API ' + res.status);
+        return res.json();
+      })
+      .then(function(data) {
+        var now = new Date().toLocaleString('en-US', {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',timeZoneName:'short'});
+        tag.textContent    = 'Live Data - ' + now;
+        footer.textContent = 'NASA FIRMS VIIRS + EPA AirNow - Updated ' + now;
+
+        var statNums = document.querySelectorAll('.stat-number');
+        if (statNums[0]) statNums[0].textContent = data.total_detections.toLocaleString();
+        if (statNums[1]) statNums[1].textContent = data.regions_with_fire;
+
+        if (!data.by_region || Object.keys(data.by_region).length === 0) {
+          grid.innerHTML = '<div class="region-card moderate" style="grid-column:1/-1;text-align:center;padding:30px;"><div class="region-name">No active fire warnings</div><div class="region-status">All monitored regions clear</div></div>';
+          return;
+        }
+
+        var tierOrder = {EMERGENCY:0,WARNING:1,ADVISORY:2,WATCH:3,NONE:4};
+        var entries = Object.entries(data.by_region);
+        entries.sort(function(a,b){ return (tierOrder[a[1].alert_tier]||5)-(tierOrder[b[1].alert_tier]||5); });
+
+        grid.innerHTML = entries.map(function(entry) {
+          var regionId = entry[0], info = entry[1];
+          var name  = REGION_NAMES[regionId] || regionId;
+          var tier  = info.alert_tier;
+          var count = info.detection_count.toLocaleString();
+          var frp   = info.max_frp_mw.toFixed(1);
+          var cc = (tier==='EMERGENCY'||tier==='WARNING') ? 'emergency' : tier==='ADVISORY' ? 'high' : 'moderate';
+          var bc = (tier==='EMERGENCY'||tier==='WARNING') ? 'badge-emergency' : tier==='ADVISORY' ? 'badge-high' : 'badge-moderate';
+          return '<div class="region-card '+cc+'"><div><div class="region-name">'+name+'</div><div class="region-status">'+count+' detections - Max FRP: '+frp+' MW</div></div><span class="region-badge '+bc+'">'+tier+'</span></div>';
+        }).join('');
+      })
+      .catch(function(err) {
+        console.error('Live data error:', err);
+        if (tag) tag.textContent = 'Live Data - Reconnecting...';
+        if (grid) grid.innerHTML = '<div class="region-card moderate" style="grid-column:1/-1;text-align:center;padding:30px;"><div class="region-name">Unable to load live data</div><div class="region-status">Satellite feed reconnecting...</div></div>';
+      });
+  }
+
+  function initAllRegions() {
+    var allBox = document.getElementById('all-regions');
+    if (!allBox) return;
+    allBox.addEventListener('change', function() {
+      var boxes = document.querySelectorAll('input[name="regions"]');
+      for (var i=0; i<boxes.length; i++) {
+        if (boxes[i] !== allBox) boxes[i].checked = allBox.checked;
+      }
+    });
+  }
+
+  function handleOptIn(e) {
     e.preventDefault();
+    var name         = document.getElementById('optin-name').value.trim();
+    var phone        = document.getElementById('optin-phone').value.trim();
+    var email        = document.getElementById('optin-email').value.trim();
+    var smsConsent   = document.getElementById('consent-sms').checked;
+    var emailConsent = document.getElementById('consent-email').checked;
 
-    const name         = document.getElementById('optin-name').value.trim();
-    const phone        = document.getElementById('optin-phone').value.trim();
-    const email        = document.getElementById('optin-email').value.trim();
-    const region       = document.getElementById('optin-region').value.trim();
-    const smsConsent   = document.getElementById('consent-sms').checked;
-    const emailConsent = document.getElementById('consent-email').checked;
-
-    if (!emailConsent && !smsConsent) {
-      alert('Please check at least one consent box to receive alerts.');
-      return;
+    var allChecked = document.querySelectorAll('input[name="regions"]:checked');
+    var selectedRegions = [];
+    for (var i=0; i<allChecked.length; i++) {
+      if (allChecked[i].value !== 'all') selectedRegions.push(allChecked[i].value);
     }
 
-    const btn = e.target.querySelector('.optin-submit');
-    btn.textContent = '⏳ Signing you up...';
+    if (!emailConsent && !smsConsent) { alert('Please check at least one consent box.'); return; }
+    if (selectedRegions.length === 0) { alert('Please select at least one watch zone.'); return; }
+
+    var btn = e.target.querySelector('.optin-submit');
+    btn.textContent = 'Signing you up...';
     btn.disabled = true;
 
-    try {
-      const response = await fetch(`${RAILWAY_API}/api/v1/subscribers`, {
+    var promises = selectedRegions.map(function(regionId) {
+      return fetch(RAILWAY_API + '/api/v1/subscribers', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {'Content-Type':'application/json'},
         body: JSON.stringify({
-          name:          name,
-          phone:         phone || null,
-          email:         email || null,
-          region_id:     null,
-          zip_code:      region || null,
-          sms_consent:   smsConsent,
-          email_consent: emailConsent,
-          opt_in_method: 'web_form',
-        }),
+          name: name, phone: phone||null, email: email||null,
+          region_id: regionId, zip_code: null,
+          sms_consent: smsConsent, email_consent: emailConsent,
+          opt_in_method: 'web_form'
+        })
       });
+    });
 
-      if (response.ok) {
-        const data = await response.json();
-        btn.textContent = '✅ Signed Up!';
+    Promise.all(promises)
+      .then(function() {
+        btn.textContent = 'Signed Up!';
         btn.style.background = '#2e7d32';
-        alert(`✅ ${data.message || 'Welcome to WildfireNet!'}\n\nYou will receive alerts when fire or smoke events are detected in your region.\n\nReply STOP to any SMS to unsubscribe at any time.`);
+        var names = selectedRegions.map(function(r){ return REGION_NAMES[r]||r; }).join(', ');
+        showModal('Welcome to WildfireNet!',
+          'Thank you for signing up, ' + name + '!\n\nYou are now watching ' + selectedRegions.length + ' region(s):\n' + names + '\n\nYou will receive email and SMS alerts when fire or smoke events are detected in your watched regions.\n\nReply STOP to any SMS to unsubscribe at any time.',
+          'green');
         e.target.reset();
-      } else {
-        const err = await response.json();
-        throw new Error(err.detail || 'Signup failed');
-      }
+      })
+      .catch(function(err) {
+        btn.textContent = 'Sign Me Up for Alerts';
+        btn.disabled = false;
+        btn.style.background = '';
+        alert('Signup failed: ' + err.message + '\n\nEmail alerts@romallen.com for help.');
+      });
+  }
 
-    } catch (error) {
-      console.error('Signup error:', error);
-      btn.textContent = '🔔 Sign Me Up for Alerts';
-      btn.disabled = false;
-      btn.style.background = '';
-      alert(`❌ Signup failed: ${error.message}\n\nPlease try again or email alerts@romallen.com`);
-    }
+  window.addEventListener('load', function() {
+    loadLiveData();
+    setInterval(loadLiveData, 600000);
+    initAllRegions();
+    initOptOut();
+  });
+
+  function initOptOut() {
+    var form = document.getElementById('optout-form');
+    if (!form) return;
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      var contact = document.getElementById('optout-contact').value.trim();
+      var btn = document.getElementById('optout-btn');
+      if (!contact) { alert('Please enter your email or phone number.'); return; }
+      btn.textContent = 'Processing...';
+      btn.disabled = true;
+      var params = contact.includes('@')
+        ? 'email=' + encodeURIComponent(contact)
+        : 'phone=' + encodeURIComponent(contact);
+      fetch(RAILWAY_API + '/api/v1/subscribers/unsubscribe?' + params, {method:'POST'})
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          btn.textContent = 'Unsubscribed';
+          btn.style.background = '#2e7d32';
+          showModal('Unsubscribed Successfully',
+            'You have been removed from WildfireNet alerts.\n\nTo resubscribe at any time, visit romallen.com/wildfire or reply START to any previous SMS.',
+            'green');
+          form.reset();
+        })
+        .catch(function() {
+          btn.textContent = 'Unsubscribe';
+          btn.disabled = false;
+          showModal('Not Found',
+            'We could not find a subscription for that email or phone number.\n\nFor help, email alerts@romallen.com',
+            'orange');
+        });
+    });
+  }
+
+  function showModal(title, message, color) {
+    var colors = {green:'#2e7d32', orange:'#e65100', red:'#B71C1C', blue:'#1565c0'};
+    var c = colors[color] || colors.blue;
+    var modal = document.createElement('div');
+    modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+    modal.innerHTML = '<div style="background:white;border-radius:16px;max-width:480px;width:100%;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.3);">'
+      + '<div style="background:' + c + ';padding:24px 28px;">'
+      + '<h2 style="color:white;margin:0;font-size:20px;">&#128293; WildfireNet</h2>'
+      + '<p style="color:rgba(255,255,255,0.9);margin:6px 0 0;font-size:15px;">' + title + '</p>'
+      + '</div>'
+      + '<div style="padding:24px 28px;">'
+      + '<p style="color:#333;font-size:15px;line-height:1.7;white-space:pre-line;">' + message + '</p>'
+      + '<div style="margin-top:20px;padding-top:16px;border-top:1px solid #eee;font-size:12px;color:#888;">'
+      + 'ROM Technology &middot; WildfireNet &middot; <a href="mailto:alerts@romallen.com" style="color:' + c + ';">alerts@romallen.com</a>'
+      + '</div>'
+      + '<button onclick="this.closest('[style*=fixed]').remove()" '
+      + 'style="margin-top:16px;background:' + c + ';color:white;border:none;padding:12px 28px;'
+      + 'border-radius:8px;font-size:15px;cursor:pointer;font-weight:600;width:100%;">Close</button>'
+      + '</div></div>';
+    document.body.appendChild(modal);
+    modal.addEventListener('click', function(e) { if (e.target === modal) modal.remove(); });
   }
 </script>
 </body>
