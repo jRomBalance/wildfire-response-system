@@ -27,7 +27,8 @@ from typing import Optional
 
 from fastapi import FastAPI, HTTPException, BackgroundTasks, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 
@@ -79,6 +80,37 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ── Serve public HTML pages directly from Railway ─────────────────────────────
+# This bypasses WordPress JS stripping issues
+import os as _os
+_public_dir = _os.path.join(_os.path.dirname(__file__), "..", "..", "docs", "public")
+_public_dir = _os.path.abspath(_public_dir)
+
+if _os.path.exists(_public_dir):
+    app.mount("/public", StaticFiles(directory=_public_dir), name="public")
+
+@app.get("/wildfire", response_class=HTMLResponse, tags=["Pages"])
+async def wildfire_page():
+    """Serve the WildfireNet public page directly from Railway."""
+    index_path = _os.path.join(_public_dir, "index.html")
+    if _os.path.exists(index_path):
+        return HTMLResponse(content=open(index_path, encoding="utf-8").read())
+    return HTMLResponse(content="<h1>Page not found</h1>", status_code=404)
+
+@app.get("/wildfire/privacy", response_class=HTMLResponse, tags=["Pages"])
+async def privacy_page():
+    path = _os.path.join(_public_dir, "privacy.html")
+    if _os.path.exists(path):
+        return HTMLResponse(content=open(path, encoding="utf-8").read())
+    return HTMLResponse(content="<h1>Page not found</h1>", status_code=404)
+
+@app.get("/wildfire/terms", response_class=HTMLResponse, tags=["Pages"])
+async def terms_page():
+    path = _os.path.join(_public_dir, "terms.html")
+    if _os.path.exists(path):
+        return HTMLResponse(content=open(path, encoding="utf-8").read())
+    return HTMLResponse(content="<h1>Page not found</h1>", status_code=404)
 
 # ── WebSocket Connection Manager ──────────────────────────────────────────────
 
