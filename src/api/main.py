@@ -666,12 +666,12 @@ async def websocket_fire_stream(websocket: WebSocket):
 async def _background_fire_poll():
     """
     Background task: polls NASA FIRMS every 10 minutes.
-    On new high-severity detections, auto-triggers alert pipeline
-    and broadcasts to WebSocket clients.
-    Uses SQLite to suppress duplicate alerts.
+    Checks each priority region, finds worst detection,
+    and sends alerts to subscribers if severity >= 2.
+    One alert per region per 2 hours maximum.
     """
     POLL_INTERVAL_SECONDS = 600  # 10 minutes
-    FIRST_POLL_DELAY = 30        # 30 seconds on startup for testing
+    FIRST_POLL_DELAY = 30        # 30 seconds on startup
 
     logger.info("Background fire polling started (first poll in 30s, then every 10 min)")
 
@@ -683,123 +683,127 @@ async def _background_fire_poll():
     except Exception as e:
         logger.error(f"Database init failed: {e}")
 
-    # Short delay on first poll so server fully starts
     await asyncio.sleep(FIRST_POLL_DELAY)
 
     while True:
         try:
             nasa_key = os.getenv("NASA_FIRMS_API_KEY")
             if not nasa_key:
-                logger.debug("FIRMS key not set — skipping background poll")
+                logger.debug("FIRMS key not set - skipping poll")
                 await asyncio.sleep(POLL_INTERVAL_SECONDS)
                 continue
 
-            logger.info("🛰️  Background fire poll starting...")
+            logger.info("Background fire poll starting...")
 
-            from src.detection.firms_client import FIRMSClient
-            from src.alerts.alert_dispatcher import AlertDispatcher, build_alert_from_firms
+            from src.detection.firms_client import FIRMSClient, PRIORITY_REGIONS
+            from src.alerts.alert_dispatcher import build_alert_from_firms
+            from src.alerts.email_notifier import EmailNotifier
+            from src.alerts.sms_notifier import SMSNotifier
+            from src.alerts.alert_dispatcher import _build_sms_message, _build_email_message
             from src.models.fire_event_db import (
                 was_recently_alerted, save_fire_event,
                 save_alert_sent, get_subscribers_for_region
             )
 
+            # Get active fire summary
             client = FIRMSClient()
-            results = await client.query_all_priority_regions(
-                days=1, source="VIIRS_SNPP", min_confidence="nominal"
-            )
+            summary = await client.get_active_fires_summary(days=1)
             await client.close()
 
-            for result in results:
-                for detection in result.detections:
-                    # Alert on ADVISORY (severity 2+) or higher
-                    if detection.severity_score < 2:
-                        continue
+            new_alerts = 0
 
-                    # Save detection to DB
-                    event_id = save_fire_event(detection)
+            # Check each region that has fires
+            for region_id, region_data in summary.get("by_region", {}).items():
+                severity = region_data.get("max_severity", 0)
+                tier = region_data.get("alert_tier", "NONE")
 
-                    # Skip if already alerted for this region recently
-                    if was_recently_alerted(
-                        detection.region_id or "unknown",
-                        detection.severity_score,
-                        hours=2,
-                    ):
-                        logger.debug(
-                            f"Duplicate suppressed: {detection.region_id} "
-                            f"severity {detection.severity_score}"
-                        )
-                        continue
+                # Only alert on ADVISORY (2) or higher
+                if severity < 2:
+                    logger.debug(f"Skipping {region_id} - severity {severity} below threshold")
+                    continue
 
-                    # Build alert
-                    alert = build_alert_from_firms(detection)
+                # Check duplicate suppression (2 hour window)
+                if was_recently_alerted(region_id, severity, hours=2):
+                    logger.info(f"Suppressed duplicate alert for {region_id}")
+                    continue
 
-                    # Load region subscribers directly from DB
-                    subs = get_subscribers_for_region(detection.region_id) if detection.region_id else []
-                    phones = [s["phone"] for s in subs if s["phone"] and s["sms_consent"]]
-                    emails = [s["email"] for s in subs if s["email"] and s["email_consent"]]
+                # Get subscribers for this region
+                subs = get_subscribers_for_region(region_id)
+                emails = [s["email"] for s in subs if s.get("email") and s.get("email_consent")]
+                phones = [s["phone"] for s in subs if s.get("phone") and s.get("sms_consent")]
 
-                    logger.info(
-                        f"Alert {alert.tier} for {detection.region_id}: "
-                        f"{len(subs)} subscribers, {len(phones)} phones, {len(emails)} emails"
-                    )
+                logger.info(
+                    f"ALERT {tier} - {region_id}: "
+                    f"{len(subs)} subscribers, {len(emails)} emails, {len(phones)} phones"
+                )
 
-                    if not subs:
-                        logger.info(f"No subscribers for {detection.region_id} - skipping alert")
-                        continue
+                if not subs:
+                    logger.info(f"No subscribers for {region_id} - skipping")
+                    continue
 
-                    # Create fresh dispatcher with DB contacts
-                    from src.alerts.sms_notifier import SMSNotifier
-                    from src.alerts.email_notifier import EmailNotifier
+                # Build a synthetic alert for this region
+                import uuid
+                from src.alerts.alert_dispatcher import FireAlert
+                alert = FireAlert(
+                    alert_id=f"auto-{uuid.uuid4().hex[:8]}",
+                    tier=tier,
+                    source="background_poll",
+                    latitude=0.0,
+                    longitude=0.0,
+                    region_id=region_id,
+                    region_name=region_id.replace("-", " ").title(),
+                    severity_score=severity,
+                    frp_mw=region_data.get("max_frp_mw"),
+                    aqi_pm25=None,
+                    confidence="nominal",
+                    description=(
+                        f"WildfireNet {tier} - {region_id.replace('-',' ').title()}. "
+                        f"NASA FIRMS detected {region_data.get('detection_count',0)} fire hotspots. "
+                        f"Max Fire Radiative Power: {region_data.get('max_frp_mw',0):.1f} MW."
+                    ),
+                )
 
-                    # Send emails directly to subscribers
-                    if emails:
-                        try:
-                            notifier = EmailNotifier()
-                            subject, body = _build_email_for_alert(alert)
-                            for email_addr in emails:
-                                await notifier.send(to=email_addr, subject=subject, body=body)
-                                logger.info(f"Alert email sent to {email_addr}")
-                        except Exception as e:
-                            logger.error(f"Email send failed: {e}")
+                # Send email alerts
+                if emails:
+                    try:
+                        notifier = EmailNotifier()
+                        subject, body = _build_email_message(alert)
+                        for email_addr in emails:
+                            await notifier.send(to=email_addr, subject=subject, body=body)
+                            logger.info(f"Alert email sent to {email_addr} for {region_id}")
+                    except Exception as e:
+                        logger.error(f"Email failed for {region_id}: {e}")
 
-                    # Send SMS directly to subscribers
-                    if phones:
-                        try:
-                            sms = SMSNotifier()
-                            from src.alerts.alert_dispatcher import _build_sms_message
-                            message = _build_sms_message(alert)
-                            for phone in phones:
-                                await sms.send(to=phone, message=message)
-                                logger.info(f"Alert SMS sent to {phone}")
-                        except Exception as e:
-                            logger.error(f"SMS send failed: {e}")
+                # Send SMS alerts
+                if phones:
+                    try:
+                        sms_notifier = SMSNotifier()
+                        message = _build_sms_message(alert)
+                        for phone in phones:
+                            await sms_notifier.send(to=phone, message=message)
+                            logger.info(f"Alert SMS sent to {phone} for {region_id}")
+                    except Exception as e:
+                        logger.error(f"SMS failed for {region_id}: {e}")
 
-                    dispatch_result = await dispatcher.dispatch(alert)
+                # Save alert record to prevent duplicates
+                save_alert_sent(alert, None)
+                new_alerts += 1
 
-                    # Record alert in DB
-                    save_alert_sent(alert, event_id)
-                    new_alerts += 1
+                # Broadcast to WebSocket clients
+                await manager.broadcast({
+                    "event": "fire_alert",
+                    "alert_id": alert.alert_id,
+                    "tier": tier,
+                    "lat": alert.latitude,
+                    "lon": alert.longitude,
+                    "region_id": region_id,
+                    "severity": severity,
+                    "frp_mw": region_data.get("max_frp_mw"),
+                    "source": "background_poll",
+                    "timestamp": alert.created_at,
+                })
 
-                    # Broadcast to WebSocket clients
-                    await manager.broadcast({
-                        "event": "fire_alert",
-                        "alert_id": alert.alert_id,
-                        "tier": alert.tier,
-                        "lat": alert.latitude,
-                        "lon": alert.longitude,
-                        "region_id": alert.region_id,
-                        "severity": alert.severity_score,
-                        "frp_mw": alert.frp_mw,
-                        "source": "background_poll",
-                        "timestamp": alert.created_at,
-                    })
-
-            logger.info(
-                f"✅ Background poll complete — "
-                f"{new_alerts} new alerts dispatched"
-            )
-
-            # Wait before next poll
+            logger.info(f"Background poll complete - {new_alerts} alerts dispatched")
             await asyncio.sleep(POLL_INTERVAL_SECONDS)
 
         except asyncio.CancelledError:
@@ -807,7 +811,7 @@ async def _background_fire_poll():
             break
         except Exception as e:
             logger.error(f"Background poll error: {e}")
-            await asyncio.sleep(60)  # Back off on error
+            await asyncio.sleep(60)
 
 
 
