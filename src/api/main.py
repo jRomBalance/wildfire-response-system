@@ -485,6 +485,47 @@ async def opt_out_subscriber(phone: str):
     return {"success": True, "message": "Unsubscribed successfully"}
 
 
+@app.post("/api/v1/subscribers/unsubscribe", tags=["Subscribers"])
+async def unsubscribe(email: Optional[str] = None, phone: Optional[str] = None):
+    """
+    Unsubscribe by email or phone.
+    Used by the website opt-out form — no login required.
+    """
+    from src.models.fire_event_db import opt_out_subscriber as db_opt_out_phone
+    from src.models.fire_event_db import opt_out_by_email
+    if not email and not phone:
+        raise HTTPException(status_code=400, detail="Email or phone required")
+    success = False
+    if phone:
+        success = db_opt_out_phone(phone)
+    if email and not success:
+        success = opt_out_by_email(email)
+    if not success:
+        raise HTTPException(status_code=404, detail="Subscriber not found")
+    return {"success": True, "message": "You have been unsubscribed from WildfireNet alerts."}
+
+
+@app.get("/api/v1/subscribers/lookup", tags=["Subscribers"])
+async def lookup_subscriber(email: Optional[str] = None, phone: Optional[str] = None):
+    """
+    Check if someone is already subscribed.
+    Used by website form to show 'already registered' message.
+    """
+    from src.models.fire_event_db import get_subscriber_by_contact
+    if not email and not phone:
+        raise HTTPException(status_code=400, detail="Email or phone required")
+    sub = get_subscriber_by_contact(phone=phone, email=email)
+    if not sub:
+        return {"found": False}
+    return {
+        "found": True,
+        "name": sub["name"],
+        "regions": sub.get("regions", "").split(",") if sub.get("regions") else [],
+        "sms_consent": bool(sub["sms_consent"]),
+        "email_consent": bool(sub["email_consent"]),
+    }
+
+
 @app.get("/api/v1/subscribers", tags=["Subscribers"])
 async def get_subscribers():
     """Get all active subscribers (admin use)."""
@@ -639,10 +680,7 @@ async def _background_fire_poll():
             dispatcher = AlertDispatcher()
             new_alerts = 0
 
-            for result in results:
-                for detection in result.detections:
-                    # Only alert on WARNING (3+) or higher
-                    if detection.severity_score < 3:
+            
                         continue
 
                     # Save detection to DB
