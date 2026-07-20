@@ -743,43 +743,32 @@
   var RAILWAY_API = 'https://wild-fire-response-production.up.railway.app';
 
   function showModal(title, message, color) {
-    var colors = {green:'#2e7d32', orange:'#e65100', red:'#B71C1C', blue:'#1565c0'};
-    var c = colors[color] || colors.blue;
-    var modal = document.createElement('div');
-    modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
-    modal.innerHTML = '<div style="background:white;border-radius:16px;max-width:480px;width:100%;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.3);">'
-      + '<div style="background:' + c + ';padding:24px 28px;">'
-      + '<h2 style="color:white;margin:0;font-size:20px;">WildfireNet</h2>'
-      + '<p style="color:rgba(255,255,255,0.9);margin:6px 0 0;font-size:15px;">' + title + '</p>'
-      + '</div>'
-      + '<div style="padding:24px 28px;">'
-      + '<p style="color:#333;font-size:15px;line-height:1.7;white-space:pre-line;">' + message + '</p>'
-      + '<div style="margin-top:20px;padding-top:16px;border-top:1px solid #eee;font-size:12px;color:#888;">'
-      + 'ROM Technology &middot; WildfireNet &middot; alerts@romallen.com'
-      + '</div>'
-      + '<button onclick="this.closest('[style*=fixed]').remove()" '
-      + 'style="margin-top:16px;background:' + c + ';color:white;border:none;padding:12px 28px;'
-      + 'border-radius:8px;font-size:15px;cursor:pointer;font-weight:600;width:100%;">Close</button>'
-      + '</div></div>';
-    document.body.appendChild(modal);
-    modal.addEventListener('click', function(e) { if (e.target === modal) modal.remove(); });
+    var c = color==='green'?'#2e7d32':color==='red'?'#B71C1C':'#1565c0';
+    var d = document.createElement('div');
+    d.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+    var box = document.createElement('div');
+    box.style.cssText = 'background:white;border-radius:16px;max-width:480px;width:100%;overflow:hidden;';
+    var hdr = document.createElement('div');
+    hdr.style.cssText = 'background:'+c+';padding:24px 28px;';
+    hdr.innerHTML = '<h2 style="color:white;margin:0;font-size:20px;">WildfireNet</h2><p style="color:rgba(255,255,255,0.9);margin:6px 0 0;">'+title+'</p>';
+    var body = document.createElement('div');
+    body.style.cssText = 'padding:24px 28px;';
+    var msg = document.createElement('p');
+    msg.style.cssText = 'color:#333;font-size:15px;line-height:1.7;white-space:pre-line;';
+    msg.textContent = message;
+    var btn = document.createElement('button');
+    btn.textContent = 'Close';
+    btn.style.cssText = 'margin-top:16px;background:'+c+';color:white;border:none;padding:12px 28px;border-radius:8px;font-size:15px;cursor:pointer;font-weight:600;width:100%;';
+    btn.onclick = function() { document.body.removeChild(d); };
+    body.appendChild(msg);
+    body.appendChild(btn);
+    box.appendChild(hdr);
+    box.appendChild(body);
+    d.appendChild(box);
+    document.body.appendChild(d);
+    d.addEventListener('click', function(e) { if(e.target===d) document.body.removeChild(d); });
   }
 
-
-
-  var REGION_NAMES = {
-    'ontario-michigan-border':     'Ontario-Michigan Border',
-    'northern-ontario-boreal':     'Northern Ontario Boreal',
-    'upper-peninsula-michigan':    'Upper Peninsula, Michigan',
-    'alberta-bc-interior':         'Alberta / BC Interior',
-    'saskatchewan-boreal':         'Saskatchewan Boreal',
-    'northern-minnesota-bwca':     'Northern Minnesota / BWCA',
-    'pacific-northwest':           'Pacific Northwest (WA/OR)',
-    'northern-rockies':            'Northern Rockies (MT/ID)',
-    'new-mexico-arizona-highlands':'NM / AZ Highlands',
-    'quebec-boreal':               'Quebec Boreal Forest',
-    'great-lakes-national-forests':'Great Lakes Forests'
-  };
 
   function loadLiveData() {
     var grid   = document.getElementById('regions-grid');
