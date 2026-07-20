@@ -866,12 +866,22 @@
       });
   }
 
-  window.addEventListener('load', function() {
-    loadLiveData();
-    setInterval(loadLiveData, 600000);
-    initAllRegions();
-    initOptOut();
-  });
+  // Fire immediately if page already loaded, otherwise wait
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    setTimeout(function() {
+      loadLiveData();
+      setInterval(loadLiveData, 600000);
+      initAllRegions();
+      initOptOut();
+    }, 100);
+  } else {
+    window.addEventListener('load', function() {
+      loadLiveData();
+      setInterval(loadLiveData, 600000);
+      initAllRegions();
+      initOptOut();
+    });
+  }
 
   function initOptOut() {
     var form = document.getElementById('optout-form');
