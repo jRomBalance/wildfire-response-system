@@ -467,25 +467,7 @@
   </style>
 </head>
 <body>
-<div id="debug-panel" style="background:#000;color:#0f0;font-family:monospace;font-size:12px;padding:10px;position:fixed;bottom:0;left:0;right:0;z-index:99999;max-height:120px;overflow-y:auto;">
-  DEBUG MODE - WildfireNet<br>
-  <span id="debug-log">Initializing...</span>
-</div>
-<script>
-function dbg(msg) {
-  var el = document.getElementById('debug-log');
-  if (el) el.innerHTML += '<br>' + new Date().toISOString().substr(11,8) + ' ' + msg;
-  console.log('[WFN]', msg);
-}
-// Test fetch immediately
-dbg('Page loaded, testing API...');
-fetch('https://wild-fire-response-production.up.railway.app/api/v1/fires/active')
-  .then(function(r) { dbg('API response: ' + r.status + ' ' + r.statusText); return r.json(); })
-  .then(function(d) { dbg('SUCCESS: ' + d.total_detections + ' detections, ' + d.regions_with_fire + ' regions'); })
-  .catch(function(e) { dbg('FETCH ERROR: ' + e.message + ' | ' + e.name); });
-dbg('Fetch sent, waiting for response...');
-</script>
-<!-- NAV -->
+ -->
 <nav>
 <a class="nav-brand" href="https://romallen.com">
 <span class="nav-logo">🔥</span>
