@@ -673,14 +673,14 @@ async def _background_fire_poll():
 
             client = FIRMSClient()
             results = await client.query_all_priority_regions(
-                days=1, source="VIIRS_SNPP", min_confidence="high"
+                days=1, source="VIIRS_SNPP", min_confidence="nominal"
             )
             await client.close()
 
-            dispatcher = AlertDispatcher()
-            new_alerts = 0
-
-            
+            for result in results:
+                for detection in result.detections:
+                    # Alert on ADVISORY (severity 2+) or higher
+                    if detection.severity_score < 2:
                         continue
 
                     # Save detection to DB
@@ -701,7 +701,7 @@ async def _background_fire_poll():
                     # Build and dispatch alert
                     alert = build_alert_from_firms(detection)
 
-                    # Load region subscribers dynamically
+                    # Load region subscribers dynamically from DB
                     if detection.region_id:
                         subs = get_subscribers_for_region(detection.region_id)
                         phones = [s["phone"] for s in subs if s["phone"] and s["sms_consent"]]
