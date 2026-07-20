@@ -884,78 +884,13 @@ dbg('Fetch sent, waiting for response...');
       });
   }
 
-  // Fire immediately if page already loaded, otherwise wait
-  if (document.readyState === 'complete' || document.readyState === 'interactive') {
-    setTimeout(function() {
-      loadLiveData();
-      setInterval(loadLiveData, 600000);
-      initAllRegions();
-      initOptOut();
-    }, 100);
-  } else {
-    window.addEventListener('load', function() {
-      loadLiveData();
-      setInterval(loadLiveData, 600000);
-      initAllRegions();
-      initOptOut();
-    });
-  }
-
-  function initOptOut() {
-    var form = document.getElementById('optout-form');
-    if (!form) return;
-    form.addEventListener('submit', function(e) {
-      e.preventDefault();
-      var contact = document.getElementById('optout-contact').value.trim();
-      var btn = document.getElementById('optout-btn');
-      if (!contact) { alert('Please enter your email or phone number.'); return; }
-      btn.textContent = 'Processing...';
-      btn.disabled = true;
-      var params = contact.includes('@')
-        ? 'email=' + encodeURIComponent(contact)
-        : 'phone=' + encodeURIComponent(contact);
-      fetch(RAILWAY_API + '/api/v1/subscribers/unsubscribe?' + params, {method:'POST'})
-        .then(function(res) { return res.json(); })
-        .then(function(data) {
-          btn.textContent = 'Unsubscribed';
-          btn.style.background = '#2e7d32';
-          showModal('Unsubscribed Successfully',
-            'You have been removed from WildfireNet alerts.\n\nTo resubscribe at any time, visit romallen.com/wildfire or reply START to any previous SMS.',
-            'green');
-          form.reset();
-        })
-        .catch(function() {
-          btn.textContent = 'Unsubscribe';
-          btn.disabled = false;
-          showModal('Not Found',
-            'We could not find a subscription for that email or phone number.\n\nFor help, email alerts@romallen.com',
-            'orange');
-        });
-    });
-  }
-
-  function showModal(title, message, color) {
-    var colors = {green:'#2e7d32', orange:'#e65100', red:'#B71C1C', blue:'#1565c0'};
-    var c = colors[color] || colors.blue;
-    var modal = document.createElement('div');
-    modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
-    modal.innerHTML = '<div style="background:white;border-radius:16px;max-width:480px;width:100%;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.3);">'
-      + '<div style="background:' + c + ';padding:24px 28px;">'
-      + '<h2 style="color:white;margin:0;font-size:20px;">&#128293; WildfireNet</h2>'
-      + '<p style="color:rgba(255,255,255,0.9);margin:6px 0 0;font-size:15px;">' + title + '</p>'
-      + '</div>'
-      + '<div style="padding:24px 28px;">'
-      + '<p style="color:#333;font-size:15px;line-height:1.7;white-space:pre-line;">' + message + '</p>'
-      + '<div style="margin-top:20px;padding-top:16px;border-top:1px solid #eee;font-size:12px;color:#888;">'
-      + 'ROM Technology &middot; WildfireNet &middot; <a href="mailto:alerts@romallen.com" style="color:' + c + ';">alerts@romallen.com</a>'
-      + '</div>'
-      + '<button onclick="this.closest('[style*=fixed]').remove()" '
-      + 'style="margin-top:16px;background:' + c + ';color:white;border:none;padding:12px 28px;'
-      + 'border-radius:8px;font-size:15px;cursor:pointer;font-weight:600;width:100%;">Close</button>'
-      + '</div></div>';
-    document.body.appendChild(modal);
-    modal.addEventListener('click', function(e) { if (e.target === modal) modal.remove(); });
-  }
+  // Simple direct call with timeout - works regardless of load state
+  setTimeout(function() {
+    loadLiveData();
+    setInterval(loadLiveData, 600000);
+    initAllRegions();
+    initOptOut();
+  }, 500);
 </script>
 </body>
 </html>
