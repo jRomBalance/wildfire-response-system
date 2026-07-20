@@ -740,8 +740,24 @@
   </p>
 </footer>
 <script>
+  // ── 1. CONSTANTS (defined first, used everywhere) ─────────────────
   var RAILWAY_API = 'https://wild-fire-response-production.up.railway.app';
 
+  var REGION_NAMES = {
+    'ontario-michigan-border':     'Ontario-Michigan Border',
+    'northern-ontario-boreal':     'Northern Ontario Boreal',
+    'upper-peninsula-michigan':    'Upper Peninsula, Michigan',
+    'alberta-bc-interior':         'Alberta / BC Interior',
+    'saskatchewan-boreal':         'Saskatchewan Boreal',
+    'northern-minnesota-bwca':     'Northern Minnesota / BWCA',
+    'pacific-northwest':           'Pacific Northwest (WA/OR)',
+    'northern-rockies':            'Northern Rockies (MT/ID)',
+    'new-mexico-arizona-highlands':'NM / AZ Highlands',
+    'quebec-boreal':               'Quebec Boreal Forest',
+    'great-lakes-national-forests':'Great Lakes Forests'
+  };
+
+  // ── 2. MODAL (defined before anything calls it) ────────────────────
   function showModal(title, message, color) {
     var c = color==='green'?'#2e7d32':color==='red'?'#B71C1C':'#1565c0';
     var d = document.createElement('div');
@@ -769,7 +785,7 @@
     d.addEventListener('click', function(e) { if(e.target===d) document.body.removeChild(d); });
   }
 
-
+  // ── 3. LIVE DATA (uses REGION_NAMES) ──────────────────────────────
   function loadLiveData() {
     var grid   = document.getElementById('regions-grid');
     var tag    = document.getElementById('live-data-tag');
@@ -812,11 +828,12 @@
       })
       .catch(function(err) {
         console.error('Live data error:', err);
-        if (tag) tag.textContent = 'Live Data - Reconnecting...';
-        if (grid) grid.innerHTML = '<div class="region-card moderate" style="grid-column:1/-1;text-align:center;padding:30px;"><div class="region-name">Unable to load live data</div><div class="region-status">Satellite feed reconnecting...</div></div>';
+        if (tag) tag.textContent = 'Live Data - Error: ' + err.message;
+        if (grid) grid.innerHTML = '<div class="region-card moderate" style="grid-column:1/-1;text-align:center;padding:30px;"><div class="region-name">Unable to load live data</div><div class="region-status">'+err.message+'</div></div>';
       });
   }
 
+  // ── 4. ALL REGIONS TOGGLE ──────────────────────────────────────────
   function initAllRegions() {
     var allBox = document.getElementById('all-regions');
     if (!allBox) return;
@@ -828,6 +845,7 @@
     });
   }
 
+  // ── 5. OPT-IN FORM ────────────────────────────────────────────────
   function handleOptIn(e) {
     e.preventDefault();
     var name         = document.getElementById('optin-name').value.trim();
@@ -868,7 +886,13 @@
         btn.style.background = '#2e7d32';
         var names = selectedRegions.map(function(r){ return REGION_NAMES[r]||r; }).join(', ');
         showModal('Welcome to WildfireNet!',
-          'Thank you for signing up, ' + name + '!\n\nYou are now watching ' + selectedRegions.length + ' region(s):\n' + names + '\n\nYou will receive email and SMS alerts when fire or smoke events are detected in your watched regions.\n\nReply STOP to any SMS to unsubscribe at any time.',
+          'Thank you, ' + name + '!
+
+Now watching ' + selectedRegions.length + ' region(s):
+' + names + '
+
+You will receive alerts when fire or smoke events are detected.
+Reply STOP to any SMS to unsubscribe.',
           'green');
         e.target.reset();
       })
@@ -876,131 +900,45 @@
         btn.textContent = 'Sign Me Up for Alerts';
         btn.disabled = false;
         btn.style.background = '';
-        alert('Signup failed: ' + err.message + '\n\nEmail alerts@romallen.com for help.');
+        showModal('Signup Error', 'Signup failed: ' + err.message + '
+
+Email alerts@romallen.com for help.', 'red');
       });
   }
 
-  // Simple direct call with timeout - works regardless of load state
-  setTimeout(function() {
-    loadLiveData();
-    setInterval(loadLiveData, 600000);
-    initAllRegions();
-    initOptOut();
-  }, 500);
-</script>
-</body>
-</html
-  function loadLiveData() {
-    var grid   = document.getElementById('regions-grid');
-    var tag    = document.getElementById('live-data-tag');
-    var footer = document.getElementById('live-data-footer');
-    if (!grid || !tag || !footer) return;
+  // ── 6. OPT-OUT FORM ───────────────────────────────────────────────
+  function initOptOut() {
+    var form = document.getElementById('optout-form');
+    if (!form) return;
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      var contact = document.getElementById('optout-contact').value.trim();
+      var btn = document.getElementById('optout-btn');
+      if (!contact) { alert('Please enter your email or phone number.'); return; }
+      btn.textContent = 'Processing...';
+      btn.disabled = true;
+      var params = contact.includes('@') ? 'email='+encodeURIComponent(contact) : 'phone='+encodeURIComponent(contact);
+      fetch(RAILWAY_API + '/api/v1/subscribers/unsubscribe?' + params, {method:'POST'})
+        .then(function(res) { return res.json(); })
+        .then(function() {
+          btn.textContent = 'Unsubscribed';
+          btn.style.background = '#2e7d32';
+          showModal('Unsubscribed', 'You have been removed from WildfireNet alerts.
 
-    fetch(RAILWAY_API + '/api/v1/fires/active')
-      .then(function(res) {
-        if (!res.ok) throw new Error('API ' + res.status);
-        return res.json();
-      })
-      .then(function(data) {
-        var now = new Date().toLocaleString('en-US', {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',timeZoneName:'short'});
-        tag.textContent    = 'Live Data - ' + now;
-        footer.textContent = 'NASA FIRMS VIIRS + EPA AirNow - Updated ' + now;
-
-        var statNums = document.querySelectorAll('.stat-number');
-        if (statNums[0]) statNums[0].textContent = data.total_detections.toLocaleString();
-        if (statNums[1]) statNums[1].textContent = data.regions_with_fire;
-
-        if (!data.by_region || Object.keys(data.by_region).length === 0) {
-          grid.innerHTML = '<div class="region-card moderate" style="grid-column:1/-1;text-align:center;padding:30px;"><div class="region-name">No active fire warnings</div><div class="region-status">All monitored regions clear</div></div>';
-          return;
-        }
-
-        var tierOrder = {EMERGENCY:0,WARNING:1,ADVISORY:2,WATCH:3,NONE:4};
-        var entries = Object.entries(data.by_region);
-        entries.sort(function(a,b){ return (tierOrder[a[1].alert_tier]||5)-(tierOrder[b[1].alert_tier]||5); });
-
-        grid.innerHTML = entries.map(function(entry) {
-          var regionId = entry[0], info = entry[1];
-          var name  = REGION_NAMES[regionId] || regionId;
-          var tier  = info.alert_tier;
-          var count = info.detection_count.toLocaleString();
-          var frp   = info.max_frp_mw.toFixed(1);
-          var cc = (tier==='EMERGENCY'||tier==='WARNING') ? 'emergency' : tier==='ADVISORY' ? 'high' : 'moderate';
-          var bc = (tier==='EMERGENCY'||tier==='WARNING') ? 'badge-emergency' : tier==='ADVISORY' ? 'badge-high' : 'badge-moderate';
-          return '<div class="region-card '+cc+'"><div><div class="region-name">'+name+'</div><div class="region-status">'+count+' detections - Max FRP: '+frp+' MW</div></div><span class="region-badge '+bc+'">'+tier+'</span></div>';
-        }).join('');
-      })
-      .catch(function(err) {
-        console.error('Live data error:', err);
-        if (tag) tag.textContent = 'Live Data - Reconnecting...';
-        if (grid) grid.innerHTML = '<div class="region-card moderate" style="grid-column:1/-1;text-align:center;padding:30px;"><div class="region-name">Unable to load live data</div><div class="region-status">Satellite feed reconnecting...</div></div>';
-      });
-  }
-
-  function initAllRegions() {
-    var allBox = document.getElementById('all-regions');
-    if (!allBox) return;
-    allBox.addEventListener('change', function() {
-      var boxes = document.querySelectorAll('input[name="regions"]');
-      for (var i=0; i<boxes.length; i++) {
-        if (boxes[i] !== allBox) boxes[i].checked = allBox.checked;
-      }
-    });
-  }
-
-  function handleOptIn(e) {
-    e.preventDefault();
-    var name         = document.getElementById('optin-name').value.trim();
-    var phone        = document.getElementById('optin-phone').value.trim();
-    var email        = document.getElementById('optin-email').value.trim();
-    var smsConsent   = document.getElementById('consent-sms').checked;
-    var emailConsent = document.getElementById('consent-email').checked;
-
-    var allChecked = document.querySelectorAll('input[name="regions"]:checked');
-    var selectedRegions = [];
-    for (var i=0; i<allChecked.length; i++) {
-      if (allChecked[i].value !== 'all') selectedRegions.push(allChecked[i].value);
-    }
-
-    if (!emailConsent && !smsConsent) { alert('Please check at least one consent box.'); return; }
-    if (selectedRegions.length === 0) { alert('Please select at least one watch zone.'); return; }
-
-    var btn = e.target.querySelector('.optin-submit');
-    btn.textContent = 'Signing you up...';
-    btn.disabled = true;
-
-    var promises = selectedRegions.map(function(regionId) {
-      return fetch(RAILWAY_API + '/api/v1/subscribers', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({
-          name: name, phone: phone||null, email: email||null,
-          region_id: regionId, zip_code: null,
-          sms_consent: smsConsent, email_consent: emailConsent,
-          opt_in_method: 'web_form'
+To resubscribe, visit this page and sign up again.', 'green');
+          form.reset();
         })
-      });
-    });
+        .catch(function() {
+          btn.textContent = 'Unsubscribe';
+          btn.disabled = false;
+          showModal('Not Found', 'Could not find your subscription.
 
-    Promise.all(promises)
-      .then(function() {
-        btn.textContent = 'Signed Up!';
-        btn.style.background = '#2e7d32';
-        var names = selectedRegions.map(function(r){ return REGION_NAMES[r]||r; }).join(', ');
-        showModal('Welcome to WildfireNet!',
-          'Thank you for signing up, ' + name + '!\n\nYou are now watching ' + selectedRegions.length + ' region(s):\n' + names + '\n\nYou will receive email and SMS alerts when fire or smoke events are detected in your watched regions.\n\nReply STOP to any SMS to unsubscribe at any time.',
-          'green');
-        e.target.reset();
-      })
-      .catch(function(err) {
-        btn.textContent = 'Sign Me Up for Alerts';
-        btn.disabled = false;
-        btn.style.background = '';
-        alert('Signup failed: ' + err.message + '\n\nEmail alerts@romallen.com for help.');
-      });
+Email alerts@romallen.com for help.', 'orange');
+        });
+    });
   }
 
-  // Simple direct call with timeout - works regardless of load state
+  // ── 7. INIT (called last, after all functions defined) ─────────────
   setTimeout(function() {
     loadLiveData();
     setInterval(loadLiveData, 600000);
