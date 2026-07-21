@@ -354,7 +354,7 @@ async def get_aqi_summary():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/v1/aqi/city", tags=["Air Quality"])
+
 async def get_aqi_city(city: str, state: str):
     """
     Get current AQI for a specific city.
