@@ -497,7 +497,7 @@ def _build_email_message(alert: FireAlert) -> tuple[str, str]:
                 📍 View on Map
             </a>
             &nbsp;&nbsp;
-            <a href="https://firms.modaps.eosdis.nasa.gov/map/"
+            <a href="https://firms.modaps.eosdis.nasa.gov/map/#d:24hrs;@{alert.longitude},{alert.latitude},8z"
                style="background:#333; color:white; padding:12px 24px;
                       text-decoration:none; border-radius:4px; font-weight:bold;">
                 🛰️ NASA FIRMS Live Map

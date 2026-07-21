@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Manage Alerts - WildfireNet</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:Arial,sans-serif; background:#1a1a1a; color:white; min-height:100vh; }
+.hdr { padding:40px; text-align:center; border-bottom:2px solid #FF5722; background:#2d1515; }
+.hdr h1 { font-size:32px; margin-bottom:8px; }
+.hdr p { color:rgba(255,255,255,0.7); font-size:16px; }
+.wrap { max-width:600px; margin:40px auto; padding:0 20px; }
+.card { background:#2a2a2a; border-radius:16px; padding:32px; margin-bottom:24px; border:1px solid #333; }
+.card h2 { font-size:20px; margin-bottom:8px; color:#FF5722; }
+.card p { color:#aaa; font-size:14px; margin-bottom:20px; }
+.btn { width:100%; padding:16px; border:none; border-radius:8px; font-size:16px; font-weight:700; cursor:pointer; }
+.btn-p { background:#FF5722; color:white; }
+.btn-p:hover { background:#B71C1C; }
+.btn-d { background:#333; color:#ff6b6b; margin-top:12px; border:1px solid #ff6b6b; }
+.btn-d:hover { background:#ff6b6b; color:white; }
+.sel { display:flex; align-items:center; gap:10px; padding:12px 14px; border-radius:8px; background:rgba(255,87,34,0.1); border:1px solid #FF5722; cursor:pointer; margin-bottom:16px; }
+.sel span { color:#FF5722; font-weight:700; font-size:15px; }
+.region-check { display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:8px; border:1px solid rgba(255,255,255,0.15); cursor:pointer; margin-bottom:8px; }
+.region-check span { color:#f0f0f0; font-size:15px; }
+.region-check input { width:18px; height:18px; flex-shrink:0; accent-color:#FF5722; }
+.ok { background:#1b5e20; border:1px solid #4CAF50; border-radius:8px; padding:16px; text-align:center; display:none; margin-top:16px; font-size:14px; }
+.badge { background:#333; border-radius:8px; padding:10px 16px; font-size:14px; color:#aaa; margin-bottom:20px; }
+.error-page { text-align:center; padding:80px 20px; }
+.error-page h2 { margin:20px 0; }
+.error-page p { color:#aaa; margin-bottom:16px; }
+.loading { text-align:center; padding:80px; color:#aaa; }
+</style>
+</head>
+<body>
+<div class="hdr">
+<h1>🔥 WildfireNet</h1>
+<p>Alert Management Dashboard</p>
+</div>
+<div class="wrap" id="app">
+<div class="loading">Loading your preferences...</div>
+</div>
+<script>
+var API = 'https://wild-fire-response-production.up.railway.app';
+
+// Get token from URL path: /manage/TOKEN
+var pathParts = window.location.pathname.split('/');
+var TOKEN = pathParts[pathParts.length - 1];
+
+var ALL_REGIONS = [
+  ['ontario-michigan-border',      'Ontario-Michigan Border'],
+  ['northern-ontario-boreal',      'Northern Ontario Boreal'],
+  ['upper-peninsula-michigan',     'Upper Peninsula, Michigan'],
+  ['alberta-bc-interior',          'Alberta / BC Interior'],
+  ['saskatchewan-boreal',          'Saskatchewan Boreal'],
+  ['northern-minnesota-bwca',      'Northern Minnesota / BWCA'],
+  ['pacific-northwest',            'Pacific Northwest (WA/OR)'],
+  ['northern-rockies',             'Northern Rockies (MT/ID)'],
+  ['quebec-boreal',                'Quebec Boreal Forest'],
+  ['great-lakes-national-forests', 'Great Lakes Forests']
+];
+
+var currentEmail = '';
+var currentRegions = [];
+
+function init() {
+  if (!TOKEN || TOKEN === 'manage') {
+    showRequestForm();
+    return;
+  }
+  // Validate token by fetching subscriber info
+  fetch(API + '/api/v1/manage/validate?token=' + encodeURIComponent(TOKEN))
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.valid) {
+        currentEmail = d.email;
+        currentRegions = d.regions || [];
+        showDashboard(d.name || 'there');
+      } else {
+        showExpired();
+      }
+    })
+    .catch(function() { showExpired(); });
+}
+
+function showRequestForm() {
+  document.getElementById('app').innerHTML = (
+    '<div class="card" style="text-align:center;">' +
+    '<h2>Manage Your Alerts</h2>' +
+    '<p>Enter your email address and we will send you a secure link to manage your alert preferences.</p>' +
+    '<input type="email" id="em" placeholder="your@email.com" style="width:100%;padding:14px 18px;border-radius:8px;border:1px solid #444;background:#333;color:white;font-size:16px;margin-bottom:16px;"/>' +
+    '<button class="btn btn-p" onclick="sendLink()">Send Management Link</button>' +
+    '<div class="ok" id="ok">Check your inbox! A management link has been sent. The link expires in 24 hours.</div>' +
+    '<p style="margin-top:20px;font-size:14px;"><a href="/wildfire" style="color:#FF5722;">Back to WildfireNet</a></p>' +
+    '</div>'
+  );
+  document.getElementById('em').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') sendLink();
+  });
+}
+
+function sendLink() {
+  var email = document.getElementById('em').value.trim();
+  if (!email) { alert('Please enter your email address.'); return; }
+  fetch(API + '/api/v1/manage/request?email=' + encodeURIComponent(email), {method:'POST'})
+    .then(function(r) { return r.json(); })
+    .then(function() { document.getElementById('ok').style.display = 'block'; })
+    .catch(function(e) { alert('Error: ' + e.message); });
+}
+
+function showExpired() {
+  document.getElementById('app').innerHTML = (
+    '<div class="error-page">' +
+    '<h2 style="color:#FF5722;">Link Expired or Invalid</h2>' +
+    '<p>This management link has expired or already been used.</p>' +
+    '<a href="/manage" style="color:#FF5722;">Request a new link</a>' +
+    '</div>'
+  );
+}
+
+function showDashboard(name) {
+  var checkboxes = '';
+  var allChecked = currentRegions.length === ALL_REGIONS.length;
+
+  ALL_REGIONS.forEach(function(r) {
+    var checked = currentRegions.indexOf(r[0]) > -1 ? 'checked' : '';
+    checkboxes += (
+      '<label class="region-check">' +
+      '<input type="checkbox" name="regions" value="' + r[0] + '" ' + checked + '/>' +
+      '<span>' + r[1] + '</span></label>'
+    );
+  });
+
+  document.getElementById('app').innerHTML = (
+    '<div class="card">' +
+    '<h2>Hello, ' + name + '!</h2>' +
+    '<p>Managing alerts for:</p>' +
+    '<div class="badge">' + currentEmail + '</div>' +
+    '<p>Currently watching <strong style="color:#FF5722;">' + currentRegions.length + ' region(s)</strong>.</p>' +
+    '</div>' +
+    '<div class="card">' +
+    '<h2>Watch Zones</h2>' +
+    '<p>Select the regions you want to receive fire and smoke alerts for.</p>' +
+    '<label class="sel">' +
+    '<input type="checkbox" id="sel-all" ' + (allChecked ? 'checked' : '') + ' style="width:18px;height:18px;accent-color:#FF5722;"/>' +
+    '<span>All Regions (recommended)</span></label>' +
+    '<div id="region-list">' + checkboxes + '</div>' +
+    '<button class="btn btn-p" onclick="saveRegions()">Save My Alert Preferences</button>' +
+    '<div class="ok" id="save-ok">Your alert preferences have been saved!</div>' +
+    '</div>' +
+    '<div class="card">' +
+    '<h2>Unsubscribe</h2>' +
+    '<p>Want to stop receiving all WildfireNet alerts? You can resubscribe anytime.</p>' +
+    '<button class="btn btn-d" onclick="unsubscribe()">Unsubscribe from All Alerts</button>' +
+    '</div>' +
+    '<p style="text-align:center;color:#555;font-size:13px;margin-top:20px;">' +
+    'ROM Technology - WildfireNet - <a href="mailto:alerts@romallen.com" style="color:#FF5722;">alerts@romallen.com</a></p>'
+  );
+
+  document.getElementById('sel-all').addEventListener('change', function() {
+    var boxes = document.querySelectorAll('input[name="regions"]');
+    for (var i = 0; i < boxes.length; i++) boxes[i].checked = this.checked;
+  });
+}
+
+function saveRegions() {
+  var checked = document.querySelectorAll('input[name="regions"]:checked');
+  var regions = [];
+  for (var i = 0; i < checked.length; i++) regions.push(checked[i].value);
+  if (!regions.length) { alert('Please select at least one region.'); return; }
+
+  fetch(API + '/api/v1/manage/update', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({token: TOKEN, regions: regions})
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    if (d.success) {
+      var ok = document.getElementById('save-ok');
+      ok.style.display = 'block';
+      setTimeout(function() { ok.style.display = 'none'; }, 4000);
+    } else {
+      alert('Error: ' + (d.detail || 'Could not save.'));
+    }
+  })
+  .catch(function(e) { alert('Error: ' + e.message); });
+}
+
+function unsubscribe() {
+  if (!confirm('Are you sure you want to unsubscribe from all WildfireNet alerts?')) return;
+  fetch(API + '/api/v1/subscribers/unsubscribe?email=' + encodeURIComponent(currentEmail), {method:'POST'})
+    .then(function() { window.location.href = '/wildfire?unsubscribed=1'; })
+    .catch(function(e) { alert('Error: ' + e.message); });
+}
+
+// Start
+init();
+</script>
+</body>
+</html>

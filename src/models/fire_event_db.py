@@ -99,6 +99,16 @@ def init_db():
                 UNIQUE(subscriber_id, region_id)
             );
 
+            -- Magic link tokens for alert management
+            CREATE TABLE IF NOT EXISTS manage_tokens (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                email       TEXT NOT NULL,
+                token       TEXT UNIQUE NOT NULL,
+                created_at  TEXT DEFAULT (datetime('now')),
+                expires_at  TEXT NOT NULL,
+                used        INTEGER DEFAULT 0
+            );
+
             -- AQI readings log
             CREATE TABLE IF NOT EXISTS aqi_readings (
                 id              INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -397,6 +407,87 @@ def get_fire_summary(days: int = 7) -> dict:
             "alerts_sent": alerts_sent,
             "by_region": [dict(r) for r in by_region],
         }
+    finally:
+        conn.close()
+
+
+
+def create_manage_token(email: str) -> Optional[str]:
+    """Generate a magic link token for alert management. Valid 24 hours."""
+    import secrets
+    from datetime import timedelta
+    token = secrets.token_urlsafe(32)
+    expires = (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat()
+    conn = get_connection()
+    try:
+        conn.execute("UPDATE manage_tokens SET used=1 WHERE email=?", (email,))
+        conn.execute("INSERT INTO manage_tokens (email, token, expires_at) VALUES (?, ?, ?)",
+                     (email, token, expires))
+        conn.commit()
+        return token
+    except Exception as e:
+        logger.error(f"Token creation failed: {e}")
+        return None
+    finally:
+        conn.close()
+
+
+def validate_manage_token(token: str) -> Optional[str]:
+    """Validate a magic link token. Returns email if valid, None if expired/invalid."""
+    conn = get_connection()
+    try:
+        row = conn.execute(
+            "SELECT email, expires_at, used FROM manage_tokens WHERE token = ?", (token,)
+        ).fetchone()
+        if not row or row["used"]:
+            return None
+        expires = datetime.fromisoformat(row["expires_at"].replace("Z", "+00:00"))
+        if datetime.now(timezone.utc) > expires:
+            return None
+        return row["email"]
+    finally:
+        conn.close()
+
+
+def get_subscriber_regions(email: str) -> list:
+    """Get all regions a subscriber is watching."""
+    conn = get_connection()
+    try:
+        row = conn.execute(
+            "SELECT id FROM subscribers WHERE email = ? AND is_active = 1", (email,)
+        ).fetchone()
+        if not row:
+            return []
+        rows = conn.execute(
+            "SELECT region_id FROM subscriber_regions WHERE subscriber_id = ?", (row["id"],)
+        ).fetchall()
+        return [r["region_id"] for r in rows]
+    finally:
+        conn.close()
+
+
+def update_subscriber_regions(email: str, new_regions: list) -> bool:
+    """Replace all regions for a subscriber."""
+    conn = get_connection()
+    try:
+        row = conn.execute(
+            "SELECT id FROM subscribers WHERE email=? AND is_active=1", (email,)
+        ).fetchone()
+        if not row:
+            return False
+        sub_id = row["id"]
+        conn.execute("DELETE FROM subscriber_regions WHERE subscriber_id=?", (sub_id,))
+        for region_id in new_regions:
+            conn.execute(
+                "INSERT OR IGNORE INTO subscriber_regions (subscriber_id, region_id) VALUES (?, ?)",
+                (sub_id, region_id)
+            )
+        conn.commit()
+        logger.info(f"Updated regions for {email}: {new_regions}")
+        return True
+    except Exception as e:
+        logger.error(f"Region update failed: {e}")
+        return False
     finally:
         conn.close()
 

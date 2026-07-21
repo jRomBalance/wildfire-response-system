@@ -27,7 +27,7 @@ from typing import Optional
 
 from fastapi import FastAPI, HTTPException, BackgroundTasks, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, HTMLResponse, FileResponse
+from fastapi.responses import JSONResponse, HTMLResponse, HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
@@ -573,6 +573,145 @@ async def get_fire_analytics(days: int = 7):
     return get_fire_summary(days=days)
 
 
+
+# -- Alert Management ----------------------------------------------------------
+
+class ManageUpdateRequest(BaseModel):
+    token: str
+    regions: list
+
+
+@app.get("/manage", response_class=HTMLResponse, tags=["Management"])
+async def manage_request_page():
+    """Landing page - enter email to get management link."""
+    return HTMLResponse(content=open(
+        os.path.join(os.path.dirname(__file__), "manage_landing.html"), encoding="utf-8"
+    ).read() if os.path.exists(
+        os.path.join(os.path.dirname(__file__), "manage_landing.html")
+    ) else _manage_landing_html())
+
+
+def _manage_landing_html():
+    lines = [
+        "<!DOCTYPE html><html><head><meta charset='UTF-8'/>",
+        "<meta name='viewport' content='width=device-width,initial-scale=1.0'/>",
+        "<title>Manage Alerts - WildfireNet</title>",
+        "<style>*{margin:0;padding:0;box-sizing:border-box}",
+        "body{font-family:Arial,sans-serif;background:#1a1a1a;color:white;min-height:100vh;",
+        "display:flex;align-items:center;justify-content:center;padding:20px}",
+        ".card{background:#2a2a2a;border-radius:16px;padding:48px 40px;max-width:480px;",
+        "width:100%;border:1px solid #333;text-align:center}",
+        "h1{font-size:28px;margin-bottom:8px;color:#FF5722}",
+        "p{color:#aaa;font-size:15px;margin-bottom:28px;line-height:1.6}",
+        "input{width:100%;padding:14px 18px;border-radius:8px;border:1px solid #444;",
+        "background:#333;color:white;font-size:16px;margin-bottom:16px}",
+        "button{width:100%;padding:16px;background:#FF5722;color:white;border:none;",
+        "border-radius:8px;font-size:16px;font-weight:700;cursor:pointer}",
+        ".ok{background:#1b5e20;border:1px solid #4CAF50;border-radius:8px;",
+        "padding:16px;margin-top:16px;display:none;font-size:14px}",
+        ".back{margin-top:24px;font-size:14px}",
+        ".back a{color:#FF5722;text-decoration:none}",
+        "</style></head><body>",
+        "<div class='card'>",
+        "<h1>WildfireNet</h1>",
+        "<p>Enter your email address and we will send you a secure link to manage your alert preferences.</p>",
+        "<input type='email' id='em' placeholder='your@email.com'/>",
+        "<button onclick='go()'>Send Management Link</button>",
+        "<div class='ok' id='ok'>Check your inbox! Link expires in 24 hours.</div>",
+        "<div class='back'><a href='/wildfire'>Back to WildfireNet</a></div>",
+        "</div>",
+        "<script>",
+        "var A='https://wild-fire-response-production.up.railway.app';",
+        "function go(){",
+        "var e=document.getElementById('em').value.trim();",
+        "if(!e){alert('Please enter your email.');return;}",
+        "fetch(A+'/api/v1/manage/request?email='+encodeURIComponent(e),{method:'POST'})",
+        ".then(function(r){return r.json();})",
+        ".then(function(){document.getElementById('ok').style.display='block';})",
+        ".catch(function(err){alert('Error: '+err.message);});}",
+        "document.getElementById('em').addEventListener('keypress',function(e){",
+        "if(e.key==='Enter')go();});",
+        "</script></body></html>",
+    ]
+    return "".join(lines)
+
+
+
+@app.get("/api/v1/manage/validate", tags=["Management"])
+async def validate_manage_token_endpoint(token: str):
+    """Validate a magic link token and return subscriber info."""
+    from src.models.fire_event_db import validate_manage_token, get_subscriber_regions, get_subscriber_by_contact
+    email = validate_manage_token(token)
+    if not email:
+        return {"valid": False}
+    sub = get_subscriber_by_contact(email=email)
+    regions = get_subscriber_regions(email)
+    return {
+        "valid": True,
+        "email": email,
+        "name": sub.get("name", "there") if sub else "there",
+        "regions": regions,
+    }
+
+
+@app.post("/api/v1/manage/request", tags=["Management"])
+async def request_manage_link(email: str, background_tasks: BackgroundTasks):
+    """Send a magic link email to manage alert preferences."""
+    from src.models.fire_event_db import create_manage_token, get_subscriber_by_contact
+    sub = get_subscriber_by_contact(email=email)
+    if not sub:
+        return {"success": True, "message": "If that email is registered, you will receive a management link shortly."}
+    token = create_manage_token(email)
+    if not token:
+        raise HTTPException(status_code=500, detail="Could not generate management link")
+    manage_url = "https://wild-fire-response-production.up.railway.app/manage/" + token
+    subject = "WildfireNet - Manage Your Alert Preferences"
+    body = (
+        "<html><body style='font-family:Arial,sans-serif;max-width:600px;margin:0 auto;'>"
+        "<div style='background:#2d1515;padding:40px;border-radius:12px 12px 0 0;text-align:center;'>"
+        "<h1 style='color:white;margin:0;'>WildfireNet</h1>"
+        "<p style='color:rgba(255,255,255,0.8);margin:8px 0 0;'>Alert Management</p>"
+        "</div>"
+        "<div style='background:white;padding:40px;border:1px solid #e0e0e0;border-radius:0 0 12px 12px;'>"
+        "<p style='font-size:16px;color:#333;'>Click the button below to manage your WildfireNet alert preferences.</p>"
+        "<p style='font-size:14px;color:#666;'>This link expires in 24 hours.</p>"
+        "<div style='text-align:center;margin:30px 0;'>"
+        "<a href='" + manage_url + "' style='background:#FF5722;color:white;padding:16px 36px;"
+        "text-decoration:none;border-radius:8px;font-weight:700;font-size:16px;'>Manage My Alerts</a>"
+        "</div>"
+        "<p style='font-size:13px;color:#888;'>If you did not request this, ignore this email.</p>"
+        "<p style='font-size:13px;color:#888;'>ROM Technology - WildfireNet - alerts@romallen.com</p>"
+        "</div></body></html>"
+    )
+    background_tasks.add_task(_send_manage_email, email, subject, body)
+    return {"success": True, "message": "If that email is registered, you will receive a management link shortly."}
+
+
+async def _send_manage_email(email: str, subject: str, body: str):
+    try:
+        from src.alerts.email_notifier import EmailNotifier
+        notifier = EmailNotifier()
+        await notifier.send(to=email, subject=subject, body=body)
+        logger.info("Management link sent to " + email)
+    except Exception as e:
+        logger.error("Management email failed: " + str(e))
+
+
+@app.post("/api/v1/manage/update", tags=["Management"])
+async def update_manage_preferences(request: ManageUpdateRequest):
+    """Update subscriber regions via management dashboard."""
+    from src.models.fire_event_db import validate_manage_token, update_subscriber_regions
+    email = validate_manage_token(request.token)
+    if not email:
+        raise HTTPException(status_code=401, detail="Invalid or expired link. Please request a new one.")
+    if not request.regions:
+        raise HTTPException(status_code=400, detail="At least one region required")
+    success = update_subscriber_regions(email, request.regions)
+    if not success:
+        raise HTTPException(status_code=404, detail="Subscriber not found")
+    return {"success": True, "message": "Updated " + str(len(request.regions)) + " watch zones for " + email}
+
+
 # ── Region Endpoints ──────────────────────────────────────────────────────────
 
 @app.get("/api/v1/regions", tags=["Regions"])
@@ -711,6 +850,7 @@ async def _background_fire_poll():
             await client.close()
 
             new_alerts = 0
+            alert = None  # will be set per region
 
             # Check each region that has fires
             for region_id, region_data in summary.get("by_region", {}).items():
@@ -748,8 +888,8 @@ async def _background_fire_poll():
                     alert_id=f"auto-{uuid.uuid4().hex[:8]}",
                     tier=tier,
                     source="background_poll",
-                    latitude=0.0,
-                    longitude=0.0,
+                    latitude={"ontario-michigan-border":(46.5,-84.5),"northern-ontario-boreal":(50.0,-85.0),"upper-peninsula-michigan":(46.4,-86.5),"alberta-bc-interior":(54.0,-115.0),"saskatchewan-boreal":(55.0,-105.0),"northern-minnesota-bwca":(47.9,-91.8),"pacific-northwest":(47.5,-120.5),"northern-rockies":(47.0,-114.0),"new-mexico-arizona-highlands":(34.0,-108.0),"quebec-boreal":(52.0,-72.0),"great-lakes-national-forests":(45.0,-88.0)}.get(region_id,(45.0,-90.0))[0],
+                    longitude={"ontario-michigan-border":(46.5,-84.5),"northern-ontario-boreal":(50.0,-85.0),"upper-peninsula-michigan":(46.4,-86.5),"alberta-bc-interior":(54.0,-115.0),"saskatchewan-boreal":(55.0,-105.0),"northern-minnesota-bwca":(47.9,-91.8),"pacific-northwest":(47.5,-120.5),"northern-rockies":(47.0,-114.0),"new-mexico-arizona-highlands":(34.0,-108.0),"quebec-boreal":(52.0,-72.0),"great-lakes-national-forests":(45.0,-88.0)}.get(region_id,(45.0,-90.0))[1],
                     region_id=region_id,
                     region_name=region_id.replace("-", " ").title(),
                     severity_score=severity,
