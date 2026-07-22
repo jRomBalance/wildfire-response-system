@@ -1,0 +1,10 @@
+# Force LF line endings for all text files
+* text=auto eol=lf
+
+# Explicitly set Python and HTML to LF
+*.py text eol=lf
+*.html text eol=lf
+*.md text eol=lf
+*.json text eol=lf
+*.txt text eol=lf
+*.sh text eol=lf
