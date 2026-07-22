@@ -311,97 +311,71 @@ footer { background: var(--dark); color: #aaa; padding: 40px; text-align: center
 <script>
 var API = 'https://wild-fire-response-production.up.railway.app';
 var RN = {
-    'ontario-michigan-border':      'Ontario-Michigan Border',
-    'northern-ontario-boreal':      'Northern Ontario Boreal',
-    'upper-peninsula-michigan':     'Upper Peninsula, Michigan',
-    'alberta-bc-interior':          'Alberta / BC Interior',
-    'saskatchewan-boreal':          'Saskatchewan Boreal',
-    'pacific-northwest':            'Pacific Northwest (WA/OR)',
-    'northern-rockies':             'Northern Rockies (MT/ID)',
-    'northern-minnesota-bwca':      'Northern Minnesota / BWCA',
-    'new-mexico-arizona-highlands': 'NM / AZ Highlands',
-    'quebec-boreal':                'Quebec Boreal Forest',
-    'great-lakes-national-forests': 'Great Lakes Forests',
-    'nevada-utah-great-basin':      'Nevada / Utah Great Basin',
-    'colorado-rockies':             'Colorado Rockies',
-    'wyoming-forests':              'Wyoming Forests',
-    'wisconsin-upper-midwest':      'Wisconsin / Upper Midwest',
-    'southern-bc-okanagan':         'Southern BC / Okanagan',
-    'california-northern':          'Northern California',
-    'california-southern':          'Southern California',
-    'texas-hill-country':           'Texas Hill Country',
-    'appalachian-southeast':        'Appalachian / Southeast',
-    'alaska-interior':              'Alaska Interior',
-    'manitoba-boreal':              'Manitoba Boreal'
+  'ontario-michigan-border':'Ontario-Michigan Border',
+  'northern-ontario-boreal':'Northern Ontario Boreal',
+  'upper-peninsula-michigan':'Upper Peninsula, Michigan',
+  'alberta-bc-interior':'Alberta / BC Interior',
+  'saskatchewan-boreal':'Saskatchewan Boreal',
+  'pacific-northwest':'Pacific Northwest (WA/OR)',
+  'northern-rockies':'Northern Rockies (MT/ID)',
+  'northern-minnesota-bwca':'Northern Minnesota / BWCA',
+  'new-mexico-arizona-highlands':'NM / AZ Highlands',
+  'quebec-boreal':'Quebec Boreal Forest',
+  'great-lakes-national-forests':'Great Lakes Forests',
+  'nevada-utah-great-basin':'Nevada / Utah Great Basin',
+  'colorado-rockies':'Colorado Rockies',
+  'wyoming-forests':'Wyoming Forests',
+  'wisconsin-upper-midwest':'Wisconsin / Upper Midwest',
+  'southern-bc-okanagan':'Southern BC / Okanagan',
+  'california-northern':'Northern California',
+  'california-southern':'Southern California',
+  'texas-hill-country':'Texas Hill Country',
+  'appalachian-southeast':'Appalachian / Southeast',
+  'alaska-interior':'Alaska Interior',
+  'manitoba-boreal':'Manitoba Boreal'
 };
-function modal(title, msg, color) {
-  var c = color === 'green' ? '#2e7d32' : color === 'red' ? '#B71C1C' : '#1565c0';
-  var d = document.createElement('div');
-  d.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
-  var b = document.createElement('div');
-  b.style.cssText = 'background:white;border-radius:16px;max-width:480px;width:100%;overflow:hidden;';
-  var h = document.createElement('div');
-  h.style.cssText = 'background:' + c + ';padding:24px;';
-  h.innerHTML = '<h2 style="color:white;margin:0;">WildfireNet</h2><p style="color:rgba(255,255,255,0.9);margin:6px 0 0;">' + title + '</p>';
-  var bd = document.createElement('div');
-  bd.style.cssText = 'padding:24px;';
-  var p = document.createElement('p');
-  p.style.cssText = 'color:#333;font-size:15px;line-height:1.7;white-space:pre-line;';
-  p.textContent = msg;
-  var btn = document.createElement('button');
-  btn.textContent = 'Close';
-  btn.style.cssText = 'margin-top:16px;background:' + c + ';color:white;border:none;padding:12px 28px;border-radius:8px;font-size:15px;cursor:pointer;width:100%;';
-  btn.onclick = function() { document.body.removeChild(d); };
-  bd.appendChild(p);
-  bd.appendChild(btn);
-  b.appendChild(h);
-  b.appendChild(bd);
-  d.appendChild(b);
-  document.body.appendChild(d);
-  d.onclick = function(e) { if (e.target === d) document.body.removeChild(d); };
-}
 var RC = {
-    'ontario-michigan-border':      [46.5,  -84.5],
-    'northern-ontario-boreal':      [50.0,  -85.0],
-    'upper-peninsula-michigan':     [46.4,  -86.5],
-    'alberta-bc-interior':          [54.0, -115.0],
-    'saskatchewan-boreal':          [55.0, -105.0],
-    'pacific-northwest':            [47.5, -120.5],
-    'northern-rockies':             [47.0, -114.0],
-    'northern-minnesota-bwca':      [47.9,  -91.8],
-    'new-mexico-arizona-highlands': [34.0, -108.0],
-    'quebec-boreal':                [52.0,  -72.0],
-    'great-lakes-national-forests': [45.0,  -88.0],
-    'nevada-utah-great-basin':      [39.5, -116.0],
-    'colorado-rockies':             [39.0, -106.0],
-    'wyoming-forests':              [43.5, -107.5],
-    'wisconsin-upper-midwest':      [45.5,  -89.5],
-    'southern-bc-okanagan':         [49.5, -119.5],
-    'california-northern':          [40.5, -122.5],
-    'california-southern':          [34.5, -117.5],
-    'texas-hill-country':           [30.5,  -99.0],
-    'appalachian-southeast':        [35.5,  -83.0],
-    'alaska-interior':              [64.5, -148.0],
-    'manitoba-boreal':              [54.0,  -97.0]
+  'ontario-michigan-border':[46.5,-84.5],
+  'northern-ontario-boreal':[50.0,-85.0],
+  'upper-peninsula-michigan':[46.4,-86.5],
+  'alberta-bc-interior':[54.0,-115.0],
+  'saskatchewan-boreal':[55.0,-105.0],
+  'pacific-northwest':[47.5,-120.5],
+  'northern-rockies':[47.0,-114.0],
+  'northern-minnesota-bwca':[47.9,-91.8],
+  'new-mexico-arizona-highlands':[34.0,-108.0],
+  'quebec-boreal':[52.0,-72.0],
+  'great-lakes-national-forests':[45.0,-88.0],
+  'nevada-utah-great-basin':[39.5,-116.0],
+  'colorado-rockies':[39.0,-106.0],
+  'wyoming-forests':[43.5,-107.5],
+  'wisconsin-upper-midwest':[45.5,-89.5],
+  'southern-bc-okanagan':[49.5,-119.5],
+  'california-northern':[40.5,-122.5],
+  'california-southern':[34.5,-117.5],
+  'texas-hill-country':[30.5,-99.0],
+  'appalachian-southeast':[35.5,-83.0],
+  'alaska-interior':[64.5,-148.0],
+  'manitoba-boreal':[54.0,-97.0]
 };
 
-function toggleRegion(el, id, lat, lon) {
-    var detail = document.getElementById('detail-' + id);
-    if (!detail) return;
-    var isOpen = detail.style.display !== 'none';
-    // Close all others
-    document.querySelectorAll('[id^="detail-"]').forEach(function(d) {
-        d.style.display = 'none';
-    });
-    if (!isOpen) {
-        detail.style.display = 'block';
-        // Lazy load iframe
-        var iframe = detail.querySelector('iframe');
-        if (iframe && !iframe.src) {
-            iframe.src = iframe.getAttribute('data-src');
-        }
-    }
-}
+// Use event delegation - no inline onclick needed
+document.addEventListener('click', function(e) {
+  var card = e.target.closest('[data-region-id]');
+  if (!card) return;
+  var id = card.getAttribute('data-region-id');
+  var lat = card.getAttribute('data-lat');
+  var lon = card.getAttribute('data-lon');
+  var detail = document.getElementById('detail-' + id);
+  if (!detail) return;
+  var isOpen = detail.style.display !== 'none';
+  document.querySelectorAll('[id^="detail-"]').forEach(function(d) { d.style.display = 'none'; });
+  if (!isOpen) {
+    detail.style.display = 'block';
+    var iframe = detail.querySelector('iframe');
+    if (iframe && !iframe.src) { iframe.src = iframe.getAttribute('data-src'); }
+  }
+});
 
 function loadFires() {
   var grid = document.getElementById('regions-grid');
@@ -426,22 +400,97 @@ function loadFires() {
       entries.sort(function(a,b) { return (to[a[1].alert_tier]||5)-(to[b[1].alert_tier]||5); });
       grid.innerHTML = entries.map(function(e) {
         var id = e[0], info = e[1];
-          var lat = RC[id] ? RC[id][0] : 45.0;
-          var lon = RC[id] ? RC[id][1] : -90.0;
         var name = RN[id] || id;
         var tier = info.alert_tier;
+        var coords = RC[id] || [45.0,-90.0];
+        var lat = coords[0], lon = coords[1];
         var cc = (tier==='EMERGENCY'||tier==='WARNING') ? 'emergency' : tier==='ADVISORY' ? 'high' : 'moderate';
         var bc = (tier==='EMERGENCY'||tier==='WARNING') ? 'badge-emergency' : tier==='ADVISORY' ? 'badge-high' : 'badge-moderate';
-        return '<div class="region-card ' + cc + '" onclick="toggleRegion(this,\'' + id + '\',\'' + lat + '\',\'' + lon + '\')" style="cursor:pointer;flex-direction:column;align-items:stretch;">'
-            + '<div style="display:flex;justify-content:space-between;align-items:center;">'
-            + '<div><div class="region-name">' + name + '</div>'
-            + '<div class="region-status">' + info.detection_count.toLocaleString() + ' detections - Max FRP: ' + info.max_frp_mw.toFixed(1) + ' MW</div></div>'
-            + '<span class="region-badge ' + bc + '">' + tier + ' +</span>'
-            + '</div>'
-            + '<div id="detail-' + id + '" style="display:none;margin-top:16px;">'
-            + '<iframe src="" data-src="https://firms.modaps.eosdis.nasa.gov/map/#d:24hrs;@' + lon + ',' + lat + ',7z" style="width:100%;height:280px;border:none;border-radius:8px;"></iframe>'
-            + '<div style="display:flex;gap:10px;margin-top:10px;">'
-            + '<a href="https://firms.modaps.eosdis.nasa.gov/map/#d:24hrs;@' + lon + ',' + lat + ',7z" target="_blank" style="flex:1;text-align:center;background:#FF5722;color:white;padding:10px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:700;">Open FIRMS Map</a>'
-            + '<a href="https://www.google.com/maps/@' + lat + ',' + lon + ',8z" target="_blank" style="flex:1;text-align:center;background:#333;color:white;padding:10px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:700;">Google Maps</a>'
-            + '</div></div>'
-            + '</div>';
+        var firmsUrl = 'https://firms.modaps.eosdis.nasa.gov/map/#d:24hrs;@' + lon + ',' + lat + ',7z';
+        var mapsUrl = 'https://www.google.com/maps/@' + lat + ',' + lon + ',8z';
+        return [
+          '<div class="region-card ' + cc + '" data-region-id="' + id + '" data-lat="' + lat + '" data-lon="' + lon + '" style="cursor:pointer;flex-direction:column;align-items:stretch;">',
+          '<div style="display:flex;justify-content:space-between;align-items:center;">',
+          '<div><div class="region-name">' + name + '</div>',
+          '<div class="region-status">' + info.detection_count.toLocaleString() + ' detections - Max FRP: ' + info.max_frp_mw.toFixed(1) + ' MW - click to expand</div></div>',
+          '<span class="region-badge ' + bc + '">' + tier + ' +</span>',
+          '</div>',
+          '<div id="detail-' + id + '" style="display:none;margin-top:16px;">',
+          '<iframe src="" data-src="' + firmsUrl + '" style="width:100%;height:280px;border:none;border-radius:8px;"></iframe>',
+          '<div style="display:flex;gap:10px;margin-top:10px;">',
+          '<a href="' + firmsUrl + '" target="_blank" style="flex:1;text-align:center;background:#FF5722;color:white;padding:10px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:700;">Open FIRMS Map</a>',
+          '<a href="' + mapsUrl + '" target="_blank" style="flex:1;text-align:center;background:#333;color:white;padding:10px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:700;">Google Maps</a>',
+          '</div></div></div>'
+        ].join('');
+      }).join('');
+    })
+    .catch(function(err) {
+      if (tag) tag.textContent = 'Live Data - Error: ' + err.message;
+      if (grid) grid.innerHTML = '<div class="region-card moderate" style="grid-column:1/-1;text-align:center;padding:30px;"><div class="region-name">Unable to load live data</div><div class="region-status">' + err.message + '</div></div>';
+    });
+}
+
+function handleOptIn(e) {
+  e.preventDefault();
+  var name = document.getElementById('optin-name').value.trim();
+  var phone = document.getElementById('optin-phone').value.trim();
+  var email = document.getElementById('optin-email').value.trim();
+  var sms = document.getElementById('consent-sms').checked;
+  var eml = document.getElementById('consent-email').checked;
+  var checked = document.querySelectorAll('input[name="regions"]:checked');
+  var regions = [];
+  for (var i = 0; i < checked.length; i++) {
+    if (checked[i].value !== 'all') regions.push(checked[i].value);
+  }
+  if (!sms && !eml) { alert('Please check at least one consent box.'); return; }
+  if (!regions.length) { alert('Please select at least one watch zone.'); return; }
+  var btn = e.target.querySelector('.optin-submit');
+  btn.textContent = 'Signing you up...';
+  btn.disabled = true;
+  Promise.all(regions.map(function(rid) {
+    return fetch(API + '/api/v1/subscribers', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name:name,phone:phone||null,email:email||null,region_id:rid,zip_code:null,sms_consent:sms,email_consent:eml,opt_in_method:'web_form'})
+    });
+  }))
+  .then(function() {
+    btn.textContent = 'Signed Up!'; btn.style.background = '#2e7d32';
+    var names = regions.map(function(r) { return RN[r]||r; }).join(', ');
+    alert('Welcome to WildfireNet, ' + name + '!\n\nNow watching ' + regions.length + ' region(s):\n' + names + '\n\nReply STOP to any SMS to unsubscribe.');
+    e.target.reset();
+  })
+  .catch(function(err) {
+    btn.textContent = 'Sign Me Up for Alerts'; btn.disabled = false;
+    alert('Signup failed: ' + err.message + '\n\nEmail alerts@romallen.com for help.');
+  });
+}
+
+// All regions toggle
+var allBox = document.getElementById('all-regions');
+if (allBox) {
+  allBox.onchange = function() {
+    var boxes = document.querySelectorAll('input[name="regions"]');
+    for (var i = 0; i < boxes.length; i++) { if (boxes[i] !== allBox) boxes[i].checked = allBox.checked; }
+  };
+}
+
+// Opt-out form
+var optout = document.getElementById('optout-form');
+if (optout) {
+  optout.onsubmit = function(e) {
+    e.preventDefault();
+    var contact = document.getElementById('optout-contact').value.trim();
+    var btn = document.getElementById('optout-btn');
+    if (!contact) { alert('Please enter your email or phone.'); return; }
+    btn.textContent = 'Processing...'; btn.disabled = true;
+    var params = contact.indexOf('@') > -1 ? 'email='+encodeURIComponent(contact) : 'phone='+encodeURIComponent(contact);
+    fetch(API + '/api/v1/subscribers/unsubscribe?' + params, {method:'POST'})
+      .then(function() { btn.textContent = 'Unsubscribed'; btn.style.background = '#2e7d32'; alert('You have been unsubscribed.'); optout.reset(); })
+      .catch(function(e) { btn.textContent = 'Unsubscribe'; btn.disabled = false; alert('Error: ' + e.message); });
+  };
+}
+
+setTimeout(function() { loadFires(); setInterval(loadFires, 600000); }, 500);
+</script>
+</body>
+</html>
