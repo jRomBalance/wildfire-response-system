@@ -1,24 +1,19 @@
 {
-  "version": "1.0.0",
-  "last_updated": "2026-07-17",
-  "description": "Critical wildfire coverage regions requiring IoT sensor deployment and monitoring. Prioritized by current risk, population downwind impact, and existing coverage gaps.",
+  "version": "2.0.0",
+  "last_updated": "2026-07-22",
+  "description": "All US wildfire priority regions plus Canadian border zones. Prioritized by current risk, population downwind impact, and existing coverage gaps.",
   "regions": [
     {
       "id": "ontario-michigan-border",
-      "name": "Ontario–Michigan Border Zone",
+      "name": "Ontario-Michigan Border Zone",
       "priority": 1,
       "status": "ACTIVE_EMERGENCY",
       "center": { "lat": 46.5, "lon": -84.5 },
-      "bbox": {
-        "north": 47.5, "south": 45.5,
-        "east": -82.0, "west": -87.0
-      },
-      "why_critical": "Source zone of July 2026 smoke event choking all of Michigan and Northeast US. Ash fall confirmed in Upper Peninsula July 15, 2026. Zero IoT ground sensor coverage.",
+      "bbox": { "north": 47.5, "south": 45.5, "east": -82.0, "west": -87.0 },
+      "why_critical": "Source zone of July 2026 smoke event choking Michigan and Northeast US.",
       "current_coverage": "NONE",
       "downwind_population_at_risk": 10000000,
-      "recommended_sensors": 500,
-      "recommended_cameras": 12,
-      "notes": "Straddles US-Canada border — requires CIFFC + USFS joint deployment agreement"
+      "recommended_sensors": 500
     },
     {
       "id": "northern-ontario-boreal",
@@ -26,16 +21,11 @@
       "priority": 1,
       "status": "ACTIVE_EMERGENCY",
       "center": { "lat": 50.0, "lon": -85.0 },
-      "bbox": {
-        "north": 54.0, "south": 46.0,
-        "east": -79.0, "west": -95.0
-      },
-      "why_critical": "Largest active fire zone in Canada as of July 2026. Boreal forest stores massive carbon — fires here drive continental-scale PM2.5 events.",
+      "bbox": { "north": 54.0, "south": 46.0, "east": -79.0, "west": -95.0 },
+      "why_critical": "Largest active fire zone in Canada. Drives continental-scale PM2.5 events.",
       "current_coverage": "NONE",
       "downwind_population_at_risk": 50000000,
-      "recommended_sensors": 2000,
-      "recommended_cameras": 30,
-      "notes": "Vast remote terrain — satellite + drone coverage essential; ground sensors via helicopter deployment"
+      "recommended_sensors": 2000
     },
     {
       "id": "upper-peninsula-michigan",
@@ -43,16 +33,11 @@
       "priority": 1,
       "status": "HIGH_RISK",
       "center": { "lat": 46.4, "lon": -86.5 },
-      "bbox": {
-        "north": 47.5, "south": 45.8,
-        "east": -83.5, "west": -90.5
-      },
-      "why_critical": "Ash fall confirmed July 15, 2026. Dense forest, sparse population, no IoT coverage. Gateway for Canadian fire smoke into Lower Michigan.",
+      "bbox": { "north": 47.5, "south": 45.8, "east": -83.5, "west": -90.5 },
+      "why_critical": "Ash fall confirmed July 15, 2026. Dense forest, sparse population, no IoT coverage.",
       "current_coverage": "NONE",
       "downwind_population_at_risk": 4000000,
-      "recommended_sensors": 300,
-      "recommended_cameras": 8,
-      "notes": "Michigan EGLE partnership opportunity — state agency already engaged on air quality alerts"
+      "recommended_sensors": 300
     },
     {
       "id": "alberta-bc-interior",
@@ -60,16 +45,11 @@
       "priority": 1,
       "status": "HIGH_RISK",
       "center": { "lat": 54.0, "lon": -115.0 },
-      "bbox": {
-        "north": 58.0, "south": 50.0,
-        "east": -110.0, "west": -122.0
-      },
-      "why_critical": "Recurring megafire origin zone. 2023 fires here triggered US-wide smoke events. Minimal sensor coverage across vast boreal and mountain terrain.",
+      "bbox": { "north": 58.0, "south": 50.0, "east": -110.0, "west": -122.0 },
+      "why_critical": "Recurring megafire origin zone. 728 detections July 2026, 144 MW FRP.",
       "current_coverage": "MINIMAL",
       "downwind_population_at_risk": 30000000,
-      "recommended_sensors": 3000,
-      "recommended_cameras": 40,
-      "notes": "BC Wildfire Service partnership — they have existing infrastructure to build on"
+      "recommended_sensors": 3000
     },
     {
       "id": "saskatchewan-boreal",
@@ -77,16 +57,35 @@
       "priority": 1,
       "status": "HIGH_RISK",
       "center": { "lat": 55.0, "lon": -105.0 },
-      "bbox": {
-        "north": 60.0, "south": 50.0,
-        "east": -98.0, "west": -110.0
-      },
-      "why_critical": "High-risk boreal zone with zero IoT coverage. Fires here travel east and south, impacting Great Plains and Great Lakes states.",
+      "bbox": { "north": 60.0, "south": 50.0, "east": -98.0, "west": -110.0 },
+      "why_critical": "High-risk boreal zone. Fires travel east and south impacting Great Plains and Great Lakes.",
       "current_coverage": "NONE",
       "downwind_population_at_risk": 20000000,
-      "recommended_sensors": 1500,
-      "recommended_cameras": 20,
-      "notes": "Saskatchewan Ministry of Environment partnership needed"
+      "recommended_sensors": 1500
+    },
+    {
+      "id": "pacific-northwest",
+      "name": "Pacific Northwest (WA/OR)",
+      "priority": 1,
+      "status": "ACTIVE_EMERGENCY",
+      "center": { "lat": 47.5, "lon": -120.5 },
+      "bbox": { "north": 49.0, "south": 44.0, "east": -116.0, "west": -124.5 },
+      "why_critical": "2,108 detections July 2026. Annual megafire zone. Smoke impacts Seattle, Portland.",
+      "current_coverage": "PARTIAL",
+      "downwind_population_at_risk": 12000000,
+      "recommended_sensors": 800
+    },
+    {
+      "id": "northern-rockies",
+      "name": "Northern Rockies (MT/ID)",
+      "priority": 1,
+      "status": "HIGH_RISK",
+      "center": { "lat": 47.0, "lon": -114.0 },
+      "bbox": { "north": 49.0, "south": 44.0, "east": -110.0, "west": -117.5 },
+      "why_critical": "High fuel load, remote terrain, recurring large fires. Gateway to Great Plains smoke.",
+      "current_coverage": "PARTIAL",
+      "downwind_population_at_risk": 5000000,
+      "recommended_sensors": 600
     },
     {
       "id": "northern-minnesota-bwca",
@@ -94,50 +93,11 @@
       "priority": 2,
       "status": "ACTIVE_RISK",
       "center": { "lat": 47.9, "lon": -91.8 },
-      "bbox": {
-        "north": 49.0, "south": 46.5,
-        "east": -89.5, "west": -94.0
-      },
-      "why_critical": "Active fires July 2026 contributing to Michigan smoke event. BWCA is a beloved wilderness area — fires here devastate tourism and ecology.",
+      "bbox": { "north": 49.0, "south": 46.5, "east": -89.5, "west": -94.0 },
+      "why_critical": "Active fires July 2026 contributing to Michigan smoke. BWCA wilderness area.",
       "current_coverage": "MINIMAL",
       "downwind_population_at_risk": 8000000,
-      "recommended_sensors": 400,
-      "recommended_cameras": 10,
-      "notes": "Minnesota DNR partnership — BWCA has existing ranger infrastructure"
-    },
-    {
-      "id": "pacific-northwest",
-      "name": "Pacific Northwest (WA/OR)",
-      "priority": 2,
-      "status": "SEASONAL_HIGH",
-      "center": { "lat": 47.5, "lon": -120.5 },
-      "bbox": {
-        "north": 49.0, "south": 44.0,
-        "east": -116.0, "west": -124.5
-      },
-      "why_critical": "Annual megafire zone. Cascade Range fires impact Seattle, Portland, and drive smoke events across the continent.",
-      "current_coverage": "PARTIAL",
-      "downwind_population_at_risk": 12000000,
-      "recommended_sensors": 800,
-      "recommended_cameras": 20,
-      "notes": "WA DNR and OR ODF have existing camera networks — integration opportunity"
-    },
-    {
-      "id": "northern-rockies",
-      "name": "Northern Rockies (MT/ID)",
-      "priority": 2,
-      "status": "SEASONAL_HIGH",
-      "center": { "lat": 47.0, "lon": -114.0 },
-      "bbox": {
-        "north": 49.0, "south": 44.0,
-        "east": -110.0, "west": -117.5
-      },
-      "why_critical": "High fuel load, remote terrain, recurring large fires. Gateway to Great Plains smoke transport.",
-      "current_coverage": "PARTIAL",
-      "downwind_population_at_risk": 5000000,
-      "recommended_sensors": 600,
-      "recommended_cameras": 15,
-      "notes": "USFS Northern Region has existing infrastructure"
+      "recommended_sensors": 400
     },
     {
       "id": "new-mexico-arizona-highlands",
@@ -145,16 +105,11 @@
       "priority": 2,
       "status": "EXTREME_DROUGHT",
       "center": { "lat": 34.0, "lon": -108.0 },
-      "bbox": {
-        "north": 37.0, "south": 31.0,
-        "east": -103.0, "west": -114.0
-      },
-      "why_critical": "Extreme drought conditions. 2022 Hermits Peak/Calf Canyon fire was largest in NM history. Recurring risk.",
+      "bbox": { "north": 37.0, "south": 31.0, "east": -103.0, "west": -114.0 },
+      "why_critical": "Extreme drought. 2022 Hermits Peak/Calf Canyon fire was largest in NM history.",
       "current_coverage": "MINIMAL",
       "downwind_population_at_risk": 3000000,
-      "recommended_sensors": 500,
-      "recommended_cameras": 12,
-      "notes": "Tribal lands overlap — Pueblo and Navajo Nation partnership critical"
+      "recommended_sensors": 500
     },
     {
       "id": "quebec-boreal",
@@ -162,33 +117,155 @@
       "priority": 2,
       "status": "HIGH_RISK",
       "center": { "lat": 52.0, "lon": -72.0 },
-      "bbox": {
-        "north": 58.0, "south": 47.0,
-        "east": -64.0, "west": -80.0
-      },
-      "why_critical": "2023 megafire origin — drove historic smoke events across US East Coast. Zero IoT coverage in vast boreal zone.",
+      "bbox": { "north": 58.0, "south": 47.0, "east": -64.0, "west": -80.0 },
+      "why_critical": "2023 megafire origin drove historic US East Coast smoke events.",
       "current_coverage": "NONE",
       "downwind_population_at_risk": 60000000,
-      "recommended_sensors": 2000,
-      "recommended_cameras": 25,
-      "notes": "SOPFEU (Quebec wildfire agency) partnership — they are well-organized and receptive"
+      "recommended_sensors": 2000
     },
     {
       "id": "great-lakes-national-forests",
       "name": "Great Lakes National Forests",
-      "priority": 3,
+      "priority": 2,
       "status": "MONITORING",
       "center": { "lat": 45.0, "lon": -88.0 },
-      "bbox": {
-        "north": 47.5, "south": 42.5,
-        "east": -83.0, "west": -92.0
-      },
-      "why_critical": "Downwind impact zone for 30M+ people. Ottawa, Hiawatha, Chequamegon-Nicolet National Forests. Increasing fire risk with climate change.",
+      "bbox": { "north": 47.5, "south": 42.5, "east": -83.0, "west": -92.0 },
+      "why_critical": "Downwind impact zone for 30M+ people. Increasing fire risk with climate change.",
       "current_coverage": "NONE",
       "downwind_population_at_risk": 30000000,
-      "recommended_sensors": 400,
-      "recommended_cameras": 10,
-      "notes": "USFS Eastern Region partnership — lower immediate fire risk but massive downwind population"
+      "recommended_sensors": 400
+    },
+    {
+      "id": "nevada-utah-great-basin",
+      "name": "Nevada / Utah Great Basin",
+      "priority": 2,
+      "status": "HIGH_RISK",
+      "center": { "lat": 39.5, "lon": -116.0 },
+      "bbox": { "north": 42.0, "south": 37.0, "east": -111.0, "west": -120.0 },
+      "why_critical": "Vast arid landscape with invasive cheatgrass fueling rapid fire spread. Active July 2026.",
+      "current_coverage": "MINIMAL",
+      "downwind_population_at_risk": 4000000,
+      "recommended_sensors": 600
+    },
+    {
+      "id": "colorado-rockies",
+      "name": "Colorado Rockies",
+      "priority": 2,
+      "status": "HIGH_RISK",
+      "center": { "lat": 39.0, "lon": -106.0 },
+      "bbox": { "north": 41.0, "south": 37.0, "east": -102.0, "west": -109.5 },
+      "why_critical": "High elevation forests, recurring fires near populated Front Range. Active July 2026.",
+      "current_coverage": "MINIMAL",
+      "downwind_population_at_risk": 6000000,
+      "recommended_sensors": 500
+    },
+    {
+      "id": "wyoming-forests",
+      "name": "Wyoming Forests",
+      "priority": 2,
+      "status": "HIGH_RISK",
+      "center": { "lat": 43.5, "lon": -107.5 },
+      "bbox": { "north": 45.0, "south": 41.0, "east": -104.0, "west": -111.0 },
+      "why_critical": "Bridger-Teton and Shoshone National Forests. High fuel load, active fire season.",
+      "current_coverage": "MINIMAL",
+      "downwind_population_at_risk": 2000000,
+      "recommended_sensors": 400
+    },
+    {
+      "id": "wisconsin-upper-midwest",
+      "name": "Wisconsin / Upper Midwest",
+      "priority": 2,
+      "status": "MONITORING",
+      "center": { "lat": 45.5, "lon": -89.5 },
+      "bbox": { "north": 47.0, "south": 44.0, "east": -86.5, "west": -92.5 },
+      "why_critical": "Smoke receptor zone from Canadian fires. Northwoods forests increasingly at risk.",
+      "current_coverage": "NONE",
+      "downwind_population_at_risk": 8000000,
+      "recommended_sensors": 300
+    },
+    {
+      "id": "southern-bc-okanagan",
+      "name": "Southern BC / Okanagan",
+      "priority": 2,
+      "status": "HIGH_RISK",
+      "center": { "lat": 49.5, "lon": -119.5 },
+      "bbox": { "north": 51.0, "south": 48.5, "east": -117.0, "west": -121.0 },
+      "why_critical": "Recurring megafire zone. 2023 Kelowna fires destroyed thousands of homes.",
+      "current_coverage": "MINIMAL",
+      "downwind_population_at_risk": 5000000,
+      "recommended_sensors": 400
+    },
+    {
+      "id": "california-northern",
+      "name": "Northern California",
+      "priority": 2,
+      "status": "SEASONAL_HIGH",
+      "center": { "lat": 40.5, "lon": -122.5 },
+      "bbox": { "north": 42.0, "south": 38.5, "east": -119.5, "west": -124.5 },
+      "why_critical": "ALERTCalifornia covers this but gaps remain. Camp Fire, Dixie Fire origin zones.",
+      "current_coverage": "GOOD",
+      "downwind_population_at_risk": 15000000,
+      "recommended_sensors": 400
+    },
+    {
+      "id": "california-southern",
+      "name": "Southern California",
+      "priority": 2,
+      "status": "SEASONAL_HIGH",
+      "center": { "lat": 34.5, "lon": -117.5 },
+      "bbox": { "north": 36.0, "south": 32.5, "east": -114.5, "west": -120.5 },
+      "why_critical": "Santa Ana wind-driven fires. LA Basin downwind. High population density.",
+      "current_coverage": "GOOD",
+      "downwind_population_at_risk": 20000000,
+      "recommended_sensors": 300
+    },
+    {
+      "id": "texas-hill-country",
+      "name": "Texas Hill Country / Panhandle",
+      "priority": 3,
+      "status": "MONITORING",
+      "center": { "lat": 30.5, "lon": -99.0 },
+      "bbox": { "north": 36.5, "south": 29.0, "east": -94.0, "west": -103.0 },
+      "why_critical": "Recurring grassland fires. 2024 Smokehouse Creek fire was largest in TX history.",
+      "current_coverage": "NONE",
+      "downwind_population_at_risk": 5000000,
+      "recommended_sensors": 400
+    },
+    {
+      "id": "appalachian-southeast",
+      "name": "Appalachian / Southeast US",
+      "priority": 3,
+      "status": "MONITORING",
+      "center": { "lat": 35.5, "lon": -83.0 },
+      "bbox": { "north": 38.0, "south": 33.0, "east": -79.0, "west": -87.0 },
+      "why_critical": "Gatlinburg 2016 fire killed 14. Increasing drought risk in southern Appalachians.",
+      "current_coverage": "NONE",
+      "downwind_population_at_risk": 10000000,
+      "recommended_sensors": 300
+    },
+    {
+      "id": "alaska-interior",
+      "name": "Alaska Interior",
+      "priority": 3,
+      "status": "SEASONAL_HIGH",
+      "center": { "lat": 64.5, "lon": -148.0 },
+      "bbox": { "north": 68.0, "south": 61.0, "east": -141.0, "west": -165.0 },
+      "why_critical": "Massive boreal fires. 2004 season burned 6.6M acres. Permafrost carbon release.",
+      "current_coverage": "MINIMAL",
+      "downwind_population_at_risk": 1000000,
+      "recommended_sensors": 500
+    },
+    {
+      "id": "manitoba-boreal",
+      "name": "Manitoba Boreal Forest",
+      "priority": 3,
+      "status": "MONITORING",
+      "center": { "lat": 54.0, "lon": -97.0 },
+      "bbox": { "north": 58.0, "south": 50.0, "east": -89.0, "west": -102.0 },
+      "why_critical": "Eastern extension of Saskatchewan fire corridor. Feeds smoke into Great Lakes states.",
+      "current_coverage": "NONE",
+      "downwind_population_at_risk": 15000000,
+      "recommended_sensors": 800
     }
   ]
 }

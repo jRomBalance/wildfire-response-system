@@ -89,16 +89,31 @@ class FIRMSQueryResult:
 # ── Priority Regions (matches data/regions/priority_regions.json) ─────────────
 
 PRIORITY_REGIONS = [
-    {"id": "ontario-michigan-border",  "north": 47.5, "south": 45.5, "east": -82.0, "west": -87.0},
-    {"id": "northern-ontario-boreal",  "north": 54.0, "south": 46.0, "east": -79.0, "west": -95.0},
-    {"id": "upper-peninsula-michigan", "north": 47.5, "south": 45.8, "east": -83.5, "west": -90.5},
-    {"id": "alberta-bc-interior",      "north": 58.0, "south": 50.0, "east": -110.0,"west": -122.0},
-    {"id": "saskatchewan-boreal",      "north": 60.0, "south": 50.0, "east": -98.0, "west": -110.0},
-    {"id": "northern-minnesota-bwca",  "north": 49.0, "south": 46.5, "east": -89.5, "west": -94.0},
-    {"id": "pacific-northwest",        "north": 49.0, "south": 44.0, "east": -116.0,"west": -124.5},
-    {"id": "northern-rockies",         "north": 49.0, "south": 44.0, "east": -110.0,"west": -117.5},
-    {"id": "quebec-boreal",            "north": 58.0, "south": 47.0, "east": -64.0, "west": -80.0},
-    {"id": "great-lakes-national-forests","north":47.5,"south":42.5,"east":-83.0,  "west": -92.0},
+    # Priority 1 - Active/Critical
+    {"id": "ontario-michigan-border",     "north": 47.5, "south": 45.5, "east": -82.0,  "west": -87.0},
+    {"id": "northern-ontario-boreal",     "north": 54.0, "south": 46.0, "east": -79.0,  "west": -95.0},
+    {"id": "upper-peninsula-michigan",    "north": 47.5, "south": 45.8, "east": -83.5,  "west": -90.5},
+    {"id": "alberta-bc-interior",         "north": 58.0, "south": 50.0, "east": -110.0, "west": -122.0},
+    {"id": "saskatchewan-boreal",         "north": 60.0, "south": 50.0, "east": -98.0,  "west": -110.0},
+    {"id": "pacific-northwest",           "north": 49.0, "south": 44.0, "east": -116.0, "west": -124.5},
+    {"id": "northern-rockies",            "north": 49.0, "south": 44.0, "east": -110.0, "west": -117.5},
+    # Priority 2 - High Risk
+    {"id": "northern-minnesota-bwca",     "north": 49.0, "south": 46.5, "east": -89.5,  "west": -94.0},
+    {"id": "new-mexico-arizona-highlands","north": 37.0, "south": 31.0, "east": -103.0, "west": -114.0},
+    {"id": "quebec-boreal",               "north": 58.0, "south": 47.0, "east": -64.0,  "west": -80.0},
+    {"id": "great-lakes-national-forests","north": 47.5, "south": 42.5, "east": -83.0,  "west": -92.0},
+    {"id": "nevada-utah-great-basin",     "north": 42.0, "south": 37.0, "east": -111.0, "west": -120.0},
+    {"id": "colorado-rockies",            "north": 41.0, "south": 37.0, "east": -102.0, "west": -109.5},
+    {"id": "wyoming-forests",             "north": 45.0, "south": 41.0, "east": -104.0, "west": -111.0},
+    {"id": "wisconsin-upper-midwest",     "north": 47.0, "south": 44.0, "east": -86.5,  "west": -92.5},
+    {"id": "southern-bc-okanagan",        "north": 51.0, "south": 48.5, "east": -117.0, "west": -121.0},
+    {"id": "california-northern",         "north": 42.0, "south": 38.5, "east": -119.5, "west": -124.5},
+    {"id": "california-southern",         "north": 36.0, "south": 32.5, "east": -114.5, "west": -120.5},
+    # Priority 3 - Monitoring
+    {"id": "texas-hill-country",          "north": 36.5, "south": 29.0, "east": -94.0,  "west": -103.0},
+    {"id": "appalachian-southeast",       "north": 38.0, "south": 33.0, "east": -79.0,  "west": -87.0},
+    {"id": "alaska-interior",             "north": 68.0, "south": 61.0, "east": -141.0, "west": -165.0},
+    {"id": "manitoba-boreal",             "north": 58.0, "south": 50.0, "east": -89.0,  "west": -102.0},
 ]
 
 
