@@ -204,11 +204,29 @@ async def root():
 
 @app.get("/health", tags=["Status"])
 async def health():
-    """Health check endpoint for load balancers and monitoring."""
+    """Health check endpoint with DB connectivity test."""
+    import os
+    db_type = os.getenv("DB_TYPE", "sqlite")
+    db_status = "unknown"
+    db_error = None
+    try:
+        from src.models.fire_event_db import get_connection
+        conn = get_connection()
+        conn.close()
+        db_status = "connected"
+    except Exception as e:
+        db_status = "error"
+        db_error = str(e)
+
     return {
-        "status": "healthy",
+        "status": "healthy" if db_status == "connected" else "degraded",
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "active_websockets": len(manager.active_connections),
+        "database": {
+            "type": db_type,
+            "status": db_status,
+            "error": db_error,
+        }
     }
 
 
