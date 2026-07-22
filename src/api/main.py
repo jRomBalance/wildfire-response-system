@@ -599,14 +599,26 @@ class ManageUpdateRequest(BaseModel):
     regions: list
 
 
+@app.get("/manage/{token}", response_class=HTMLResponse, tags=["Management"])
+async def manage_token_page(token: str):
+    """Serve manage.html for magic link tokens."""
+    import os as _os
+    p = _os.path.join(_os.path.dirname(__file__), "..", "..", "docs", "public", "manage.html")
+    p = _os.path.abspath(p)
+    if _os.path.exists(p):
+        return HTMLResponse(content=open(p, encoding="utf-8").read())
+    return HTMLResponse(content="<h1>Management page not found</h1>", status_code=404)
+
+
 @app.get("/manage", response_class=HTMLResponse, tags=["Management"])
 async def manage_request_page():
     """Landing page - enter email to get management link."""
-    return HTMLResponse(content=open(
-        os.path.join(os.path.dirname(__file__), "manage_landing.html"), encoding="utf-8"
-    ).read() if os.path.exists(
-        os.path.join(os.path.dirname(__file__), "manage_landing.html")
-    ) else _manage_landing_html())
+    import os as _os
+    p = _os.path.join(_os.path.dirname(__file__), "..", "..", "docs", "public", "manage.html")
+    p = _os.path.abspath(p)
+    if _os.path.exists(p):
+        return HTMLResponse(content=open(p, encoding="utf-8").read())
+    return HTMLResponse(content=_manage_landing_html())
 
 
 def _manage_landing_html():
