@@ -111,12 +111,19 @@ function sendLink() {
 
 function showExpired() {
   document.getElementById('app').innerHTML = (
-    '<div class="error-page">' +
-    '<h2 style="color:#FF5722;">Link Expired or Invalid</h2>' +
-    '<p>This management link has expired or already been used.</p>' +
-    '<a href="/manage" style="color:#FF5722;">Request a new link</a>' +
+    '<div class="card" style="text-align:center;">' +
+    '<h2 style="color:#FF5722;margin-bottom:12px;">Link Expired or Invalid</h2>' +
+    '<p style="color:#aaa;margin-bottom:24px;">This management link has expired or already been used. Enter your email below to get a fresh link.</p>' +
+    '<input type="email" id="em" placeholder="your@email.com" style="width:100%;padding:14px 18px;border-radius:8px;border:1px solid #444;background:#333;color:white;font-size:16px;margin-bottom:16px;"/>' +
+    '<button class="btn btn-p" onclick="sendLink()" style="width:100%;padding:16px;background:#FF5722;color:white;border:none;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer;">Send New Management Link</button>' +
+    '<div class="ok" id="ok" style="background:#1b5e20;border:1px solid #4CAF50;border-radius:8px;padding:16px;margin-top:16px;display:none;font-size:14px;">Check your inbox! A new management link has been sent.</div>' +
+    '<p style="margin-top:20px;font-size:14px;"><a href="/wildfire" style="color:#FF5722;">Back to WildfireNet</a></p>' +
     '</div>'
   );
+  setTimeout(function() {
+    var em = document.getElementById("em");
+    if (em) em.addEventListener("keypress", function(e) { if (e.key === "Enter") sendLink(); });
+  }, 100);
 }
 
 function showDashboard(name) {

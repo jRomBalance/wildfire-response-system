@@ -880,6 +880,14 @@ async def _background_fire_poll():
                     logger.debug(f"Skipping {region_id} - severity {severity} below threshold")
                     continue
 
+                # False positive filter: require multiple detections in region
+                # Single-pixel detections are often buildings, power plants, flares
+                detection_count = region_data.get("detection_count", 0)
+                max_frp = region_data.get("max_frp_mw", 0)
+                if detection_count < 2 and max_frp < 50:
+                    logger.info(f"Skipping {region_id} - likely false positive (count:{detection_count} frp:{max_frp:.1f}MW)")
+                    continue
+
                 # Check duplicate suppression (2 hour window)
                 if was_recently_alerted(region_id, severity, hours=2):
                     logger.info(f"Suppressed duplicate alert for {region_id}")
