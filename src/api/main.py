@@ -233,7 +233,7 @@ async def health():
 # ── Fire Detection Endpoints ──────────────────────────────────────────────────
 
 @app.get("/api/v1/fires/active", tags=["Fire Detection"])
-async def get_active_fires(days: int = 1):
+async def get_active_fires(days: int = 2):
     """
     Get active fire summary across all priority regions.
     Queries NASA FIRMS VIIRS satellite data.
@@ -876,7 +876,7 @@ async def _background_fire_poll():
 
             # Get active fire summary
             client = FIRMSClient()
-            summary = await client.get_active_fires_summary(days=1)
+            summary = await client.get_active_fires_summary(days=2)  # 2 days for FIRMS gap resilience
             await client.close()
 
             new_alerts = 0

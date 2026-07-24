@@ -262,8 +262,9 @@ footer { background: var(--dark); color: #aaa; padding: 40px; text-align: center
 </div>
 <div class="consent">
 <input id="consent-email" name="consent-email" type="checkbox"/>
-<label for="consent-email">I agree to receive wildfire alert emails from WildfireNet (ROM Technology). I can unsubscribe at any time. <a href="/wildfire/privacy.html" target="_blank">Privacy Policy</a></label>
+<label for="consent-email"><strong style="color:#FF8A65;">(Optional)</strong> I agree to receive wildfire alert emails from WildfireNet (ROM Technology). I can unsubscribe at any time. <a href="/wildfire/privacy.html" target="_blank">Privacy Policy</a></label>
 </div>
+<p style="color:#888;font-size:12px;line-height:1.5;margin-bottom:12px;text-align:left;">You must select at least one alert method (email or SMS) to receive wildfire alerts. Both are optional individually — you can choose email only, SMS only, or both.</p>
 <button class="optin-submit" type="submit">&#128276; Sign Me Up for Alerts</button>
 </form>
 <p class="optin-disclaimer">By signing up, you consent to receive wildfire alert messages from WildfireNet / ROM Technology. Message and data rates may apply. Text STOP to cancel. Mobile numbers are never shared with third parties. <a href="/wildfire/privacy.html" style="color:var(--fire);">Privacy Policy</a> and <a href="/wildfire/terms.html" style="color:var(--fire);">Terms</a></p>
@@ -457,7 +458,7 @@ function handleOptIn(e) {
   for (var i = 0; i < checked.length; i++) {
     if (checked[i].value !== 'all') regions.push(checked[i].value);
   }
-  if (!sms && !eml) { alert('Please check at least one consent box.'); return; }
+  if (!sms && !eml) { alert('Please check at least one alert method (email or SMS) to receive wildfire alerts.'); return; }
   if (!regions.length) { alert('Please select at least one watch zone.'); return; }
   var btn = e.target.querySelector('.optin-submit');
   btn.textContent = 'Signing you up...';
