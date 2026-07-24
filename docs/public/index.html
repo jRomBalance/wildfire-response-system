@@ -225,8 +225,9 @@ footer { background: var(--dark); color: #aaa; padding: 40px; text-align: center
 </div>
 <form class="optin-form" onsubmit="handleOptIn(event)">
 <input id="optin-name" placeholder="Your name" required type="text"/>
-<input id="optin-phone" placeholder="Phone number (e.g. +1 555 123 4567)" type="tel"/>
+<input id="optin-phone" placeholder="Phone number (optional - for SMS alerts)" type="tel"/>
 <input id="optin-email" placeholder="Email address" required type="email"/>
+<p style="color:#888;font-size:12px;margin-top:-8px;">Email required. Phone and SMS consent are optional.</p>
 <div style="text-align:left;margin-bottom:8px;">
 <label style="color:#ccc;font-size:14px;font-weight:600;display:block;margin-bottom:10px;">Watch Zones - Select all regions you want alerts for:</label>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
@@ -256,16 +257,16 @@ footer { background: var(--dark); color: #aaa; padding: 40px; text-align: center
     </div>
 </div>
 <div class="consent">
-<input id="consent-sms" name="consent-sms" required type="checkbox"/>
-<label for="consent-sms">I agree to receive recurring automated wildfire alert SMS messages from WildfireNet (ROM Technology). Message frequency varies. Message and data rates may apply. Reply STOP to cancel. Reply HELP for help. This consent is not a condition of any purchase. <a href="/wildfire/privacy" target="_blank">Privacy Policy</a> and <a href="/wildfire/terms" target="_blank">Terms</a></label>
+<input id="consent-sms" name="consent-sms" type="checkbox"/>
+<label for="consent-sms"><strong style="color:#FF8A65;">(Optional)</strong> I agree to receive recurring automated wildfire alert SMS messages from WildfireNet (ROM Technology). Message frequency varies. Message and data rates may apply. Reply STOP to cancel. Reply HELP for help. This consent is not a condition of any purchase. <a href="/wildfire/privacy.html" target="_blank">Privacy Policy</a> and <a href="/wildfire/terms.html" target="_blank">Terms</a></label>
 </div>
 <div class="consent">
 <input id="consent-email" name="consent-email" type="checkbox"/>
-<label for="consent-email">I agree to receive wildfire alert emails from WildfireNet (ROM Technology). I can unsubscribe at any time. <a href="/wildfire/privacy" target="_blank">Privacy Policy</a></label>
+<label for="consent-email">I agree to receive wildfire alert emails from WildfireNet (ROM Technology). I can unsubscribe at any time. <a href="/wildfire/privacy.html" target="_blank">Privacy Policy</a></label>
 </div>
 <button class="optin-submit" type="submit">&#128276; Sign Me Up for Alerts</button>
 </form>
-<p class="optin-disclaimer">By signing up, you consent to receive wildfire alert messages from WildfireNet / ROM Technology. Message and data rates may apply. Text STOP to cancel. Mobile numbers are never shared with third parties. <a href="/wildfire/privacy" style="color:var(--fire);">Privacy Policy</a> and <a href="/wildfire/terms" style="color:var(--fire);">Terms</a></p>
+<p class="optin-disclaimer">By signing up, you consent to receive wildfire alert messages from WildfireNet / ROM Technology. Message and data rates may apply. Text STOP to cancel. Mobile numbers are never shared with third parties. <a href="/wildfire/privacy.html" style="color:var(--fire);">Privacy Policy</a> and <a href="/wildfire/terms.html" style="color:var(--fire);">Terms</a></p>
 </div>
 </div>
 </section>
@@ -300,8 +301,8 @@ footer { background: var(--dark); color: #aaa; padding: 40px; text-align: center
 <footer>
 <div class="footer-links">
 <a href="/wildfire">Home</a>
-<a href="/wildfire/privacy">Privacy Policy</a>
-<a href="/wildfire/terms">Terms and Conditions</a>
+<a href="/wildfire/privacy.html">Privacy Policy</a>
+<a href="/wildfire/terms.html">Terms and Conditions</a>
 <a href="https://github.com/jRomBalance/wildfire-response-system">GitHub</a>
 <a href="https://romallen.com">ROM Technology</a>
 <a href="mailto:alerts@romallen.com">Contact</a>
